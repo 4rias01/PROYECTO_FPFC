@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ScalaCompilerConfiguration">
+    <option name="separateProdTestSources" value="true" />
+    <profile name="sbt 1" modules="Itinerarios FPFC 2025-II,proyecto_final_correccion" />
+    <profile name="sbt 2" modules="Itinerarios FPFC 2025-II.main,Itinerarios FPFC 2025-II.test,proyecto_final_correccion.main,proyecto_final_correccion.test">
+      <option name="implicitConversions" value="true" />
+      <option name="deprecationWarnings" value="true" />
+    </profile>
+  </component>
+</project>
