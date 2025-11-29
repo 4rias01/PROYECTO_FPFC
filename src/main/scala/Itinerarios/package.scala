@@ -8,20 +8,21 @@ package object Itinerarios {
 
     def buscarItinerarios(Org: String, Dst: String, visitados: Set[String], itinerarioActual: Itinerario): List[Itinerario] = {
       if (Org == Dst) {
-        return List(itinerarioActual)
+        List(itinerarioActual)
       }
-      
-      for {
-        vuelo <- vuelos 
-        if vuelo.Org == Org && !visitados.contains(vuelo.Dst)
-        newVisitados = visitados + Org
-        newItinerary = itinerarioActual :+ vuelo
-        resultado <- buscarItinerarios(vuelo.Dst, Dst, newVisitados, newItinerary)
-      } yield resultado
+      else {
+        for {
+          vuelo <- vuelos
+          if vuelo.Org == Org && !visitados.contains(vuelo.Dst)
+          newVisitados = visitados + Org
+          newItinerary = itinerarioActual :+ vuelo
+          resultado <- buscarItinerarios(vuelo.Dst, Dst, newVisitados, newItinerary)
+        } yield resultado
+      }
     }
 
     (c1: String, c2: String) => buscarItinerarios(c1, c2, Set(), List())
-  }  
+  }
 
   //Funcion auxiliar para convertir el tiempo
   def calcularTiempoTotal(itinerario: Itinerario, aeropuertos: Map[String, Aeropuerto]): Int = {
