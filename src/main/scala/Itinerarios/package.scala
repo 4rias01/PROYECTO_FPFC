@@ -94,12 +94,13 @@ package object Itinerarios {
 
   def itinerariosEscalas(vuelos: List[Vuelo], aeropuertos: List[Aeropuerto]): (String, String) => List[Itinerario] = {
 
+    def numeroEscalas(it: Itinerario): Int =
+      it.map(_.Esc).sum + it.length - 1
+
+    val itinerariosPosibles = itinerarios(vuelos, aeropuertos)
     (origen: String, destino: String) => {
-      itinerarios(vuelos, aeropuertos)(origen, destino)
-        .sortBy(itinerario =>
-          itinerario.map(_.Esc).sum
-            + itinerario.length - 1
-        )
+      itinerariosPosibles(origen, destino)
+        .sortBy(numeroEscalas)
         .take(3)
     }
   }
