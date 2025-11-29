@@ -31,7 +31,6 @@ package object Datos {
   }
 
   val aeropuertosCurso = List(
-
     Aeropuerto("CLO", 100, 200, -500), // Cali
     Aeropuerto("BOG", 300, 500, -500), // Bogotá
     Aeropuerto("MDE", 200, 600, -500), // Medellín
@@ -44,11 +43,11 @@ package object Datos {
     Aeropuerto("MEX", 1000, 1000, -600), // Ciudad de México
     Aeropuerto("MAD", 5000, 5000, 100), // Madrid
     Aeropuerto("SVCS", 400, 1000, -600), // Caracas
-    Aeropuerto("MID", 500, 100, -600), // Merida
+    Aeropuerto("MID", 500, 100, -600), // Mérida
     Aeropuerto("AUA", 500, 2000, -400), // Aruba
     Aeropuerto("IST", 9000, 9000, 300), // Estambul
     Aeropuerto("HND", 10000, 12000, 900), // Tokio
-    Aeropuerto("DXB", 9500, 11500, 400), // Dubai
+    Aeropuerto("DXB", 9500, 11500, 400), // Dubái
     Aeropuerto("SVO", 12500, 12500, 300) // Moscú
   )
 
@@ -68,7 +67,14 @@ package object Datos {
     Vuelo("AVA", 4321, "CTG", 9, 30, "SMR", 10, 0, 0),
     Vuelo("COPA", 7631, "SMR", 10, 50, "PTY", 11, 50, 0),
     Vuelo("TURKISH", 7799, "CLO", 7, 0, "IST", 14, 0, 3),
-    Vuelo("QATAR", 5566, "IST", 23, 0, "SVO", 2, 0, 0),
+    Vuelo("QATAR", 5566, "IST", 23, 0, "SVO", 2, 0, 0)
+  )
+
+
+  val vuelosPrueba = List(
+    Vuelo("AIRVZLA", 601, "CLO", 5, 0, "BOG", 7, 0, 0),
+    Vuelo("AIRVZLA", 602, "BOG", 8, 30, "BAQ", 13, 30, 0),
+    Vuelo("AVA", 9432, "BAQ", 14, 0, "DXB", 2, 0, 0),
   )
   //type ItinerarioPar = ParSeq[Vuelo]
   // Venezuela aislada, Cali Moscu, Cali CDMX pasando por Bogota vs pasando por Mde - Baq, CTG - PTY directo o pasando
