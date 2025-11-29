@@ -10,16 +10,18 @@ package object Itinerarios {
       if (Org == Dst) {
         return List(itinerarioActual)
       }
-
-      vuelos.filter(v => v.Org == Org && !visitados.contains(v.Dst)).flatMap { vuelo =>
-        val newVisitados = visitados + Org
-        val newItinerary = itinerarioActual :+ vuelo
-        buscarItinerarios(vuelo.Dst, Dst, newVisitados, newItinerary)
-      }
+      
+      for {
+        vuelo <- vuelos 
+        if vuelo.Org == Org && !visitados.contains(vuelo.Dst)
+        newVisitados = visitados + Org
+        newItinerary = itinerarioActual :+ vuelo
+        resultado <- buscarItinerarios(vuelo.Dst, Dst, newVisitados, newItinerary)
+      } yield resultado
     }
 
     (c1: String, c2: String) => buscarItinerarios(c1, c2, Set(), List())
-  }
+  }  
 
   //Funcion auxiliar para convertir el tiempo
   def calcularTiempoTotal(itinerario: Itinerario, aeropuertos: Map[String, Aeropuerto]): Int = {

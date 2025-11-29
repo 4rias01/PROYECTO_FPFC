@@ -29,3 +29,12 @@ def compararAlgoritmos(a1: (String, String) => List[Itinerario], a2: (String, St
 val itsCurso = itinerarios(vuelosCurso, aeropuertosCurso)
 val its1 = itsCurso("MID", "SVCS")
 val its2 = itsCurso("CLO", "SVCS")
+
+// 4 itinerarios CLO–SVO
+val its3 = itsCurso("CLO", "SVO")
+
+// 2 itinerarios CLO–MEX
+val its4 = itsCurso("CLO", "MEX")
+
+// 2 itinerarios CTG–PTY
+val its5 = itsCurso("CTG", "PTY")
