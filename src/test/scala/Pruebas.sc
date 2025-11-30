@@ -83,3 +83,9 @@ val itsa4 = itsAireCurso("CLO", "MEX")
 
 // 2 itinerarios CTG–PTY
 val itsa5 = itsAireCurso("CTG", "PTY")
+
+val itSalidaCurso = itinerarioSalida(vuelosCurso, aeropuertosCurso)
+
+val sal1 = itSalidaCurso("CTG", "PTY", 11, 40)
+val sal2 = itSalidaCurso("CTG", "PTY", 11, 55)
+val sal3 = itSalidaCurso("CTG", "PTY", 10, 30)
