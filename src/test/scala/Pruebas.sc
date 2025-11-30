@@ -38,3 +38,48 @@ val its4 = itsCurso("CLO", "MEX")
 
 // 2 itinerarios CTG–PTY
 val its5 = itsCurso("CTG", "PTY")
+
+val itsTiempoCurso = itinerariosTiempo(vuelosCurso, aeropuertosCurso)
+
+// Prueba itinerariosTiempo
+val itst1 = itsTiempoCurso("MID", "SVCS")
+val itst2 = itsTiempoCurso("CLO", "SVCS")
+
+// 4 itinerarios CLO–SVO
+val itst3 = itsTiempoCurso("CLO", "SVO")
+
+// 2 itinerarios CLO–MEX
+val itst4 = itsTiempoCurso("CLO", "MEX")
+
+// 2 itinerarios CTG–PTY
+val itst5 = itsTiempoCurso("CTG", "PTY")
+
+// Obtener todas las escalas del curso
+val itsEscalasCurso = itinerariosEscalas(vuelosCurso, aeropuertosCurso)
+
+val itsc1 = itsEscalasCurso("MID", "SVCS")
+val itsc2 = itsEscalasCurso("CLO", "SVCS")
+
+// 4 itinerarios CLO–SVO
+val itsc3 = itsEscalasCurso("CLO", "SVO")
+
+// 2 itinerarios CLO–MEX
+val itsc4 = itsEscalasCurso("CLO", "MEX")
+
+// 2 itinerarios CTG–PTY
+val itsc5 = itsEscalasCurso("CTG", "PTY")
+
+// Obtener todos los itinerarios aéreos del curso
+val itsAireCurso = itinerariosAire(vuelosCurso, aeropuertosCurso)
+
+val itsa1 = itsAireCurso("MID", "SVCS")
+val itsa2 = itsAireCurso("CLO", "SVCS")
+
+// 4 itinerarios CLO–SVO
+val itsa3 = itsAireCurso("CLO", "SVO")
+
+// 2 itinerarios CLO–MEX
+val itsa4 = itsAireCurso("CLO", "MEX")
+
+// 2 itinerarios CTG–PTY
+val itsa5 = itsAireCurso("CTG", "PTY")
