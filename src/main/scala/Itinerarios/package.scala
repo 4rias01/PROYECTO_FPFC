@@ -350,11 +350,16 @@ package object Itinerarios {
 
     (c1: String, c2: String, h: Int, m: Int) => {
       val todosItinerarios = itinerariosPosibles(c1, c2)
-      val itinerariosConDiferencia = todosItinerarios.map { it =>
-        (it, diferenciaItinerario(it, h, m))
+      if(todosItinerarios.isEmpty){
+        null
       }
-      val mejorItinerario = itinerariosConDiferencia.minBy(_._2)._1
-      mejorItinerario
+      else{
+        val itinerariosConDiferencia = todosItinerarios.map { it =>
+          (it, diferenciaItinerario(it, h, m))
+        }
+        val mejorItinerario = itinerariosConDiferencia.minBy(_._2)._1
+        mejorItinerario
+      }
     }
   }
 }
