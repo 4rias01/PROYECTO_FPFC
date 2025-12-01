@@ -3,55 +3,71 @@ import Datos._
 import scala.collection.parallel.CollectionConverters._ //revisar
 package object ItinerariosPar {
 
-  // 3.1
-  def itinerariosPar(vuelos: List[Vuelo], aeropuertos: List[Aeropuerto]): (String, String) => List[Itinerario] = {
+  /**
+   * Versión paralelizada de la función `itinerarios`, basada en paralelismo
+   * de datos mediante colecciones paralelas. Esta función genera todos los
+   * itinerarios posibles entre dos aeropuertos dados, pero permite que la
+   * exploración de los vuelos salientes desde cada aeropuerto se realice en
+   * paralelo, aprovechando múltiples núcleos disponibles.
+   *
+   * La idea principal viene al convertir la colección de vuelos a una
+   * colección paralela (`vuelos.par`), las operaciones de filtrado y
+   * mapeo que se realizan durante la búsqueda en profundidad (DFS)
+   * pueden distribuirse automáticamente entre varios hilos gestionados
+   * por la JVM, sin recurrir a estructuras de control imperativas.
+   *
+   * Semánticamente, la función sigue exactamente el comportamiento de la
+   * versión secuencial: se realiza un DFS prohibiendo ciclos mediante
+   * el conjunto `visitados`, y cada vez que el aeropuerto actual coincide
+   * con el destino solicitado, se devuelve el itinerario construido.
+   * Sin embargo, el for-comprehension que recorre los vuelos salientes
+   * opera ahora sobre una colección paralela, permitiendo que las
+   * ramificaciones de la búsqueda se evalúen concurrentemente.
+   */
+  def itinerariosPar(
+                      vuelos: List[Vuelo],
+                      aeropuertos: List[Aeropuerto]
+                    ): (String, String) => List[Itinerario] = {
 
-    def buscarItinerarios(Org: String, Dst: String, visitados: Set[String], itinerarioActual: Itinerario): List[Itinerario] = {
-      if (Org == Dst) {
-        return List(itinerarioActual)
+    // Colección paralela de vuelos para reutilizar en toda la recursión
+    val vuelosPar = vuelos.par
+
+    def buscarItinerariosPar(org: String,
+                              dst: String,
+                              visitados: Set[String],
+                              itinerarioActual: Itinerario): List[Itinerario] = {
+
+      if (org == dst) {
+        // Caso base: ya llegamos al destino, devolvemos el itinerario construido
+        List(itinerarioActual)
+      } else {
+        // Recorremos en paralelo todos los vuelos que salen de 'org'
+        // y que no conducen a un aeropuerto ya visitado.
+        val resultadosPar = for {
+          vuelo <- vuelosPar
+          if vuelo.Org == org && !visitados.contains(vuelo.Dst)
+          newVisitados   = visitados + org
+          newItinerario  = itinerarioActual :+ vuelo
+          resultado <- buscarItinerariosPar(
+            vuelo.Dst,
+            dst,
+            newVisitados,
+            newItinerario
+          )
+        } yield resultado
+
+        // Convertimos de colección paralela a List secuencial
+        resultadosPar.toList
       }
-
-      val resultadosParalelos = vuelos.filter(v => v.Org == Org && !visitados.contains(v.Dst)).map { vuelo =>
-        task {
-          val newVisitados = visitados + Org
-          val newItinerary = itinerarioActual :+ vuelo
-          buscarItinerarios(vuelo.Dst, Dst, newVisitados, newItinerary)
-        }
-      }
-
-      resultadosParalelos.flatMap(_.join())
     }
 
-    (c1: String, c2: String) => buscarItinerarios(c1, c2, Set(), List())
-  }
-
-  // Funcion auxiliar para convertir el tiempo
-  def calcularTiempoTotal(itinerario: Itinerario, aeropuertos: Map[String, Aeropuerto]): Int = {
-    itinerario.map { vuelo =>
-      val origen = aeropuertos(vuelo.Org)
-      val destino = aeropuertos(vuelo.Dst)
-      val salidaMinutos = vuelo.HS * 60 + vuelo.MS
-      val llegadaMinutos = vuelo.HL * 60 + vuelo.ML
-      val diferenciaGMT = destino.GMT - origen.GMT
-      val tiempoVuelo = (llegadaMinutos + diferenciaGMT * 60) - salidaMinutos
-      if (tiempoVuelo < 0) tiempoVuelo + 24 * 60 else tiempoVuelo
-    }.sum
+    (c1: String, c2: String) =>
+      buscarItinerariosPar(c1, c2, Set.empty[String], List.empty[Vuelo])
   }
 
   // 3.2
   def itinerariosTiempoPar(vuelos: List[Vuelo], aeropuertos: List[Aeropuerto]): (String, String) => List[Itinerario] = {
-    val aeropuertosMap = aeropuertos.map(a => a.Cod -> a).toMap
-    val obtenerItinerarios = itinerariosPar(vuelos, aeropuertos)
-
-    (c1: String, c2: String) => {
-      val todosItinerarios = obtenerItinerarios(c1, c2)
-      val itinerariosConTiempo = todosItinerarios.map(it => task {
-        (it, calcularTiempoTotal(it, aeropuertosMap))
-      })
-
-      val mejoresItinerarios = itinerariosConTiempo.map(_.join()).sortBy(_._2).take(3)
-      mejoresItinerarios.map(_._1)
-    }
+    null
   }
 
   //3.3
