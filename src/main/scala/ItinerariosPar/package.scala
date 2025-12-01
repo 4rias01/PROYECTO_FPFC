@@ -54,7 +54,7 @@ package object ItinerariosPar {
     }
   }
 
-//3.3
+  //3.3
   def itinerariosEscalasPar(vuelos: List[Vuelo], aeropuertos: List[Aeropuerto]): (String, String) => List[Itinerario] = {
     (origen: String, destino: String) => {
       val obtenerItinerarios = itinerariosPar(vuelos, aeropuertos)(origen, destino)
@@ -70,44 +70,72 @@ package object ItinerariosPar {
         .take(3)
         .map(_._1)
     }
-  }    
-//3.4
+  }
+  //3.4
+
+  /**
+   * Para la implementacion de ItinerariosAirePar se usó paralelizacion de tareas, con la abtracción parallel(a,b).
+   *
+   * Se paralelizó la funcion auxiliar "tiempoEnAire", si el número de vuelos del itinerario supera el umbral establecido
+   * se divide la lista de vuelos en dos mitades y se calculan en paralelo sus tiempos en aire, sumandolos después, con 
+   * el fin de paralelizar el cálculo de tiempo total de un itinerario.
+   *
+   * Luego, para el calulo total de sobre la colección de los itinerarios posibles, se creó la funcion auxiliar 
+   * "tiemposPar", la cual para listas de itinerarios mayores que el umbral, se divide la lista en dos y se ejecutan 
+   * en paralelo su tiempo total. Retorna la concatencacion del tiempo en aire total para cada itinerario
+   *
+   * por último se usa la funcion zip entre la lista de itinerarios posibles y la lista de tiempos para relacionar 
+   * cada itinerario con su tiempo total correspondiente y se eligen los tres con menor tiempo
+   */
   def itinerariosAirePar(vuelos: List[Vuelo], aeropuertos: List[Aeropuerto]): (String, String) => List[Itinerario] = {
 
-    def distancia(a1: Aeropuerto, a2: Aeropuerto): Double = {
-      val dx = a1.X - a2.X
-      val dy = a1.Y - a2.Y
-      Math.sqrt(dx * dx + dy * dy)
+    val aeropuertosMap = aeropuertos.map(a => a.Cod -> a).toMap
+    val itinerariosPosibles = itinerariosPar(vuelos, aeropuertos)
+
+    def offsetMinutos(gmt: Int): Int = (gmt / 100) * 60
+
+    def minutosUTC(hora: Int, minuto: Int, gmt: Int): Int = {
+      val totalMinutos = hora * 60 + minuto
+      totalMinutos - offsetMinutos(gmt)
     }
 
-    def encontrarAeropuerto(cod: String): Option[Aeropuerto] = {
-      aeropuertos.find(_.Cod == cod)
+    def tiempoVuelo(vuelo: Vuelo): Double = {
+      val origen = aeropuertosMap(vuelo.Org)
+      val destino = aeropuertosMap(vuelo.Dst)
+      val salidaUTC = minutosUTC(vuelo.HS, vuelo.MS, origen.GMT)
+      val llegadaUTC = minutosUTC(vuelo.HL, vuelo.ML, destino.GMT)
+      val tiempo = llegadaUTC - salidaUTC
+      if (tiempo < 0) tiempo + 24 * 60 else tiempo
     }
 
-    def dfs(actual: String, destino: String, ruta: List[Vuelo], distTotal: Double, visitados: Set[String], mejores: collection.mutable.PriorityQueue[(List[Vuelo], Double)]): List[Itinerario] = {
-      if (actual == destino) {
-        if (mejores.size < 3) {
-          mejores.enqueue((ruta, distTotal))
-        } else if (distTotal < mejores.head._2) {
-          mejores.dequeue()
-          mejores.enqueue((ruta, distTotal))
-        }
-        List()
-      } else {
-        val posiblesVuelos = vuelos.par.filter(v => v.Org == actual && !visitados.contains(v.Dst))
-        posiblesVuelos.flatMap { vuelo =>
-          val dist = encontrarAeropuerto(vuelo.Org).flatMap(origen => encontrarAeropuerto(vuelo.Dst).map(destino => distancia(origen, destino)))
-          dfs(vuelo.Dst, destino, ruta :+ vuelo, distTotal + dist.getOrElse(Double.MaxValue), visitados + actual, mejores)
-        }.toList
+    def tiempoEnAirePar(itinerario: Itinerario): Double = {
+      val umb = 5;
+      if (itinerario.length <= umb)
+        itinerario.map(tiempoVuelo).sum
+      else {
+        val (izq, der) = itinerario.splitAt(itinerario.length / 2)
+        val (sum1, sum2) = parallel(tiempoEnAirePar(izq), tiempoEnAirePar(der))
+        sum1 + sum2
       }
     }
 
     (cod1: String, cod2: String) => {
-      val mejores = collection.mutable.PriorityQueue.empty(Ordering.by[(List[Vuelo], Double), Double](_._2).reverse)
-      val visitados = Set[String]()
-      dfs(cod1, cod2, List(), 0.0, visitados, mejores)
-      mejores.map(_._1).toList
+
+      def tiemposPar(it: List[Itinerario])(f:Itinerario => Double): List[Double] = {
+        val umbral = 20
+        if(it.length <= umbral)
+          it.map(f)
+        else
+          val (a,b) = it.splitAt(it.length / 2)
+          val (izq,der) = parallel(tiemposPar(a)(f),tiemposPar(b)(f))
+          izq ++ der
+      }
+
+      val ListaItinenarios = itinerariosPosibles(cod1, cod2)
+      val tiempos = tiemposPar(ListaItinenarios)(tiempoEnAirePar)
+      val pares = ListaItinenarios.zip(tiempos)
+      pares.sortBy(_._2).take(3).map(_._1)
     }
   }
-}
 
+}
