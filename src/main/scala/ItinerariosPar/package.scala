@@ -65,10 +65,129 @@ package object ItinerariosPar {
       buscarItinerariosPar(c1, c2, Set.empty[String], List.empty[Vuelo])
   }
 
-  // 3.2
-  def itinerariosTiempoPar(vuelos: List[Vuelo], aeropuertos: List[Aeropuerto]): (String, String) => List[Itinerario] = {
-    null
+  /**
+   * Versión paralelizada de `itinerariosTiempo`, que selecciona los tres
+   * itinerarios con menor tiempo total de viaje entre dos aeropuertos, pero
+   * incorporando dos niveles de paralelismo: paralelismo de datos y
+   * paralelismo de tareas.
+   *
+   * 1. Paralelismo sobre itinerarios (paralelismo de datos):
+   *    ---------------------------------------------------------------------
+   *    La función `itinerariosPar` se utiliza para generar todos los
+   *    itinerarios posibles entre `c1` y `c2`. Esta versión paralela del
+   *    generador reparte automáticamente la exploración de alternativas de
+   *    vuelos entre varios hilos mediante colecciones paralelas, evitando
+   *    estructuras imperativas y sin necesidad de crear hilos manualmente.
+   *
+   *    Posteriormente, la lista resultante de itinerarios se procesa con
+   *    `.par.map(...)`, permitiendo que el cálculo del tiempo total de cada
+   *    itinerario se evalúe en paralelo. Cada itinerario es independiente,
+   *    por lo que este paralelismo es seguro y naturalmente expresable como
+   *    paralelismo de datos, tal como se describe en la Clase 12.
+   *
+   * 2. Paralelismo dentro de cada itinerario (paralelismo de tareas):
+   *    ---------------------------------------------------------------------
+   *    El tiempo total de un itinerario se compone de:
+   *      - tiempo total en aire (suma de duraciones de todos los vuelos),
+   *      - tiempo total en escalas (suma de tiempos de espera entre vuelos).
+   *
+   *    Estos dos cálculos son completamente independientes, por lo que se
+   *    evalúan de manera simultánea mediante la construcción `parallel(e1, e2)`
+   *    introducida en la Clase 11. De esta manera se explotan múltiples núcleos
+   *    incluso dentro del análisis de un único itinerario, combinando así
+   *    paralelismo de tareas con paralelismo de datos.
+   *
+   * 3. Selección final de los mejores itinerarios:
+   *    ---------------------------------------------------------------------
+   *    Una vez calculado el tiempo total de cada itinerario, la lista se ordena
+   *    por dicho valor y se seleccionan los tres con menor duración. Toda la
+   *    implementación permanece estrictamente funcional: no se utilizan
+   *    estructuras mutables, no existe coordinación explícita entre hilos y el
+   *    paralelismo lo gestiona internamente la librería estándar de Scala.
+   *
+   * En conjunto, esta función ilustra adecuadamente cómo combinar ambos modelos
+   * de paralelismo estudiados en el curso: paralelismo de datos para procesar
+   * múltiples elementos de manera independiente y paralelismo de tareas para
+   * dividir el cálculo de una única unidad de trabajo en subcómputos que pueden
+   * ejecutarse simultáneamente.
+   */
+ def itinerariosTiempoPar(
+                            vuelos: List[Vuelo],
+                            aeropuertos: List[Aeropuerto]
+                          ): (String, String) => List[Itinerario] = {
+
+    val aeropuertosMap: Map[String, Aeropuerto] =
+      aeropuertos.map(a => a.Cod -> a).toMap
+
+    // Versión con paralelismo de tareas dentro del cálculo
+    def calcularTiempoTotal(itinerario: Itinerario, aeropuertos: Map[String, Aeropuerto]): Int = {
+
+      def offsetMinutos(gmt: Int): Int = (gmt / 100) * 60
+
+      def minutosUTC(hora: Int, minuto: Int, gmt: Int): Int = {
+        val totalMinutos = hora * 60 + minuto
+        totalMinutos - offsetMinutos(gmt)
+      }
+
+      def tiempoVuelo(vuelo: Vuelo): Int = {
+        val origen  = aeropuertos(vuelo.Org)
+        val destino = aeropuertos(vuelo.Dst)
+        val salidaUTC  = minutosUTC(vuelo.HS, vuelo.MS, origen.GMT)
+        val llegadaUTC = minutosUTC(vuelo.HL, vuelo.ML, destino.GMT)
+        val tiempo = llegadaUTC - salidaUTC
+        if (tiempo < 0) tiempo + 24 * 60 else tiempo
+      }
+
+      def tiempoEspera(vueloAnterior: Vuelo, vueloSiguiente: Vuelo): Int = {
+        val destinoAnterior = aeropuertos(vueloAnterior.Dst)
+        val origenSiguiente = aeropuertos(vueloSiguiente.Org)
+        val llegadaUTC = minutosUTC(vueloAnterior.HL, vueloAnterior.ML, destinoAnterior.GMT)
+        val salidaUTC  = minutosUTC(vueloSiguiente.HS, vueloSiguiente.MS, origenSiguiente.GMT)
+        val espera = salidaUTC - llegadaUTC
+        if (espera < 0) espera + 24 * 60 else espera
+      }
+
+      // Aquí viene la gracia:
+      // calculamos tiempoEnAire y tiempoEnEscala en paralelo
+      val (tiempoEnAire, tiempoEnEscala) = parallel(
+        // tarea 1: sumar tiempos de vuelo
+        itinerario.map(tiempoVuelo).sum,
+        // tarea 2: sumar tiempos de espera entre vuelos consecutivos
+        itinerario
+          .sliding(2)
+          .map {
+            case List(v1, v2) => tiempoEspera(v1, v2)
+            case _            => 0
+          }
+          .sum
+      )
+
+      tiempoEnAire + tiempoEnEscala
+    }
+
+    // Reutilizamos la versión paralela de itinerarios
+    val obtenerItinerariosPar = itinerariosPar(vuelos, aeropuertos)
+
+    (c1: String, c2: String) => {
+      val todosItinerarios: List[Itinerario] =
+        obtenerItinerariosPar(c1, c2)
+
+      // Paralelismo de datos sobre itinerarios
+      val itinerariosConTiempo: List[(Itinerario, Int)] =
+        todosItinerarios
+          .par
+          .map(it => (it, calcularTiempoTotal(it, aeropuertosMap)))
+          .toList
+
+      val mejoresItinerarios =
+        itinerariosConTiempo
+          .sortBy(_._2)
+          .take(3)
+
+      mejoresItinerarios.map(_._1)
+    }
   }
+
 
   //3.3
   def itinerariosEscalasPar(vuelos: List[Vuelo], aeropuertos: List[Aeropuerto]): (String, String) => List[Itinerario] = {
