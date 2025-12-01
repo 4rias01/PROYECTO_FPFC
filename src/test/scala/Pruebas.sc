@@ -2,6 +2,8 @@ import Itinerarios._
 import Datos._
 import org.scalameter.{Key, KeyValue, Warmer, config}
 import scala.util.Random
+import common2._
+import ItinerariosPar._
 
 def compararAlgoritmos(a1: (String, String) => List[Itinerario], a2: (String, String) => List[Itinerario])
                       (origen: String, destino: String): (Double, Double, Double) = {
@@ -89,3 +91,18 @@ val itSalidaCurso = itinerarioSalida(vuelosCurso, aeropuertosCurso)
 val sal1 = itSalidaCurso("CTG", "PTY", 11, 40)
 val sal2 = itSalidaCurso("CTG", "PTY", 11, 55)
 val sal3 = itSalidaCurso("CTG", "PTY", 10, 30)
+
+val itsAireCursoPar = itinerariosAirePar(vuelosCurso, aeropuertosCurso)
+
+val itsa6 = itsAireCursoPar("MID", "SVCS")
+val itsa7 = itsAireCursoPar("CLO", "SVCS")
+
+// 4 itinerarios CLO–SVO
+val itsa8 = itsAireCursoPar("CLO", "SVO")
+
+// 2 itinerarios CLO–MEX
+val itsa9 = itsAireCursoPar("CLO", "MEX")
+
+// 2 itinerarios CTG–PTY
+val itsa10 = itsAireCursoPar("CTG", "PTY")
+
