@@ -136,8 +136,6 @@ package object Itinerarios {
     }
   }
 
-  //3.3
-
   /**
    * Selecciona los tres itinerarios entre dos aeropuertos que presentan el menor
    * número total de escalas, considerando tanto las escalas explícitas indicadas
@@ -272,7 +270,6 @@ package object Itinerarios {
    */
 
   def itinerarioSalida(vuelos: List[Vuelo], aeropuertos: List[Aeropuerto]): (String, String, Int, Int) => Itinerario = {
-    // Implementacion alternativa si es necesario
     val itinerariosPosibles= itinerarios(vuelos, aeropuertos)
     val aeropuertosMap = aeropuertos.map(a => a.Cod -> a).toMap
 

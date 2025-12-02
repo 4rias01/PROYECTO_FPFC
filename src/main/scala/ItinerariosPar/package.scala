@@ -380,8 +380,7 @@ package object ItinerariosPar {
         val espera = salidaUTC - llegadaUTC
         if (espera < 0) espera + 24 * 60 else espera
       }
-
-      // Paralelizamos aire vs escalas (dos tareas independientes)
+      
       val (tiempoEnAire, tiempoEnEscala) = parallel(
         itinerario.map(tiempoVuelo).sum,
         itinerario
