@@ -3,8 +3,6 @@ import Datos.*
 import scala.annotation.tailrec
 package object Itinerarios {
 
-  type Itinerario = List[Vuelo]
-
   /**
    * Genera todos los itinerarios posibles entre dos aeropuertos dados, modelando
    * el problema como un recorrido en profundidad (DFS) sobre el grafo de vuelos.
