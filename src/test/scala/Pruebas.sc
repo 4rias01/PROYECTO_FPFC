@@ -5,6 +5,7 @@ import scala.util.Random
 import common2._
 import ItinerariosPar._
 
+
 def compararAlgoritmos(a1: (String, String) => List[Itinerario], a2: (String, String) => List[Itinerario])
                       (origen: String, destino: String): (Double, Double, Double) = {
 
@@ -105,4 +106,3 @@ val itsa9 = itsAireCursoPar("CLO", "MEX")
 
 // 2 itinerarios CTG–PTY
 val itsa10 = itsAireCursoPar("CTG", "PTY")
-

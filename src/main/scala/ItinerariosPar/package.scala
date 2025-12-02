@@ -1,6 +1,8 @@
 import common._
 import Datos._
 import scala.collection.parallel.CollectionConverters._ //revisar
+
+
 package object ItinerariosPar {
 
   /**
@@ -33,9 +35,9 @@ package object ItinerariosPar {
     val vuelosPar = vuelos.par
 
     def buscarItinerariosPar(org: String,
-                              dst: String,
-                              visitados: Set[String],
-                              itinerarioActual: Itinerario): List[Itinerario] = {
+                             dst: String,
+                             visitados: Set[String],
+                             itinerarioActual: Itinerario): List[Itinerario] = {
 
       if (org == dst) {
         // Caso base: ya llegamos al destino, devolvemos el itinerario construido
@@ -111,7 +113,7 @@ package object ItinerariosPar {
    * dividir el cálculo de una única unidad de trabajo en subcómputos que pueden
    * ejecutarse simultáneamente.
    */
- def itinerariosTiempoPar(
+  def itinerariosTiempoPar(
                             vuelos: List[Vuelo],
                             aeropuertos: List[Aeropuerto]
                           ): (String, String) => List[Itinerario] = {
@@ -212,14 +214,14 @@ package object ItinerariosPar {
    * Para la implementacion de ItinerariosAirePar se usó paralelizacion de tareas, con la abtracción parallel(a,b).
    *
    * Se paralelizó la funcion auxiliar "tiempoEnAire", si el número de vuelos del itinerario supera el umbral establecido
-   * se divide la lista de vuelos en dos mitades y se calculan en paralelo sus tiempos en aire, sumandolos después, con 
+   * se divide la lista de vuelos en dos mitades y se calculan en paralelo sus tiempos en aire, sumandolos después, con
    * el fin de paralelizar el cálculo de tiempo total de un itinerario.
    *
-   * Luego, para el calulo total de sobre la colección de los itinerarios posibles, se creó la funcion auxiliar 
-   * "tiemposPar", la cual para listas de itinerarios mayores que el umbral, se divide la lista en dos y se ejecutan 
+   * Luego, para el calulo total de sobre la colección de los itinerarios posibles, se creó la funcion auxiliar
+   * "tiemposPar", la cual para listas de itinerarios mayores que el umbral, se divide la lista en dos y se ejecutan
    * en paralelo su tiempo total. Retorna la concatencacion del tiempo en aire total para cada itinerario
    *
-   * por último se usa la funcion zip entre la lista de itinerarios posibles y la lista de tiempos para relacionar 
+   * por último se usa la funcion zip entre la lista de itinerarios posibles y la lista de tiempos para relacionar
    * cada itinerario con su tiempo total correspondiente y se eligen los tres con menor tiempo
    */
   def itinerariosAirePar(vuelos: List[Vuelo], aeropuertos: List[Aeropuerto]): (String, String) => List[Itinerario] = {
@@ -260,10 +262,11 @@ package object ItinerariosPar {
         val umbral = 20
         if(it.length <= umbral)
           it.map(f)
-        else
+        else {
           val (a,b) = it.splitAt(it.length / 2)
           val (izq,der) = parallel(tiemposPar(a)(f),tiemposPar(b)(f))
           izq ++ der
+        }
       }
 
       val ListaItinenarios = itinerariosPosibles(cod1, cod2)
@@ -272,5 +275,4 @@ package object ItinerariosPar {
       pares.sortBy(_._2).take(3).map(_._1)
     }
   }
-
 }

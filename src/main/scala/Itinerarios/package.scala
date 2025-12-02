@@ -5,7 +5,7 @@ package object Itinerarios {
 
   type Itinerario = List[Vuelo]
 
-  /**
+  /**t
    * Genera todos los itinerarios posibles entre dos aeropuertos dados, modelando
    * el problema como un recorrido en profundidad (DFS) sobre el grafo de vuelos.
    *
