@@ -258,7 +258,7 @@ Qué hace: Selecciona el itinerario que permite salir lo más tarde posible y au
   * Selecciona el itinerario con mínima anticipación usando minBy, con manejo explícito del caso sin rutas retornando null.
 
 ---
-    
+
 ## 5. Correctitud de las funciones
 
 ### 5.1. Correctitud de `itinerarios`
