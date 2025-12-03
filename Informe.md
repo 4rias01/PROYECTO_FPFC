@@ -279,15 +279,58 @@ Qué hace: Selecciona el itinerario que permite salir lo más tarde posible y au
 
 ### 6.1. Qué se paralelizó
 
-**(Indicar qué partes del cómputo se ejecutan en paralelo y por qué.)**
+* Generación de itinerarios
+  * Se paralelizó la exploración del grafo de vuelos al convertir la colección de vuelos en una colección paralela y recorrerla con for-comprehensions sobre vuelos.par. Esto permite que la expansión de ramas del DFS se evalúe concurrentemente.
+  * Función: itinerariosPar. La recursión y el control de visitados se mantienen inmutables, lo que evita condiciones de carrera.
+
+* Evaluación de métricas sobre los itinerarios
+  * Paralelismo de datos: se procesan listas de itinerarios con .par.map para calcular métricas de cada itinerario en paralelo (tiempo total, número de escalas, tiempo en aire).
+  * Paralelismo de tareas: dentro del cálculo del tiempo total de un itinerario se paraleliza el cómputo de tiempo en aire y tiempo en escalas con la abstracción parallel(e1, e2).
+  * Funciones: itinerariosTiempoPar paraleliza la evaluación del tiempo total por itinerario y divide el cálculo interno en tareas independientes; itinerariosEscalasPar paraleliza el cálculo de la métrica de escalas por itinerario; itinerariosAirePar paraleliza tanto el cálculo de tiempo en aire por itinerario (divide y vencerás con umbrales) como el procesamiento de grandes listas de itinerarios.
+
+* Selección del mejor itinerario para salida tardía
+  * Se paraleliza la generación de rutas y la evaluación de la diferencia con la hora de cita por itinerario.
+  * Función: itinerarioSalidaPar. Usa .par.map para calcular la diferencia respecto a la cita en paralelo y parallel(e1, e2) dentro del cálculo de tiempo total.
 
 ### 6.2. Técnicas utilizadas
 
-**(Explicar paralelismo de datos/tareas y uso de colecciones paralelas.)**
+* Colecciones paralelas de Scala
+  * La conversión a vuelos.par y listas.par habilita el paralelismo de datos de forma declarativa, sin gestionar hilos manualmente.
+  * Las operaciones habituales (map, filter, sliding, sum) se ejecutan en paralelo cuando operan sobre colecciones paralelas, repartiendo el trabajo entre múltiples hilos gestionados por la JVM.
+
+* Paralelismo de datos
+  * Se aplica al procesar múltiples itinerarios de manera independiente con .par.map. Cada itinerario es una unidad de trabajo sin dependencias, ideal para paralelismo de datos.
+
+* Paralelismo de tareas
+  * Se aplica dentro del cálculo del tiempo total de un itinerario, separando tiempo en aire y tiempo en escalas y evaluándolos en paralelo con parallel(e1, e2).
+  * En itinerariosAirePar se usa divide y vencerás con umbrales:
+    * Si el itinerario supera un umbral de longitud, se divide en dos mitades y se suman sus tiempos en paralelo.
+    * Para listas de itinerarios grandes, se divide la lista en dos y se evalúa tiempos en paralelo, concatenando los resultados.
+
+* Inmutabilidad para paralelismo seguro
+  * Los datos (Vuelo, Aeropuerto, itinerarios como listas) son inmutables; los conjuntos de visitados son inmutables por rama. Esto evita condiciones de carrera y facilita la equivalencia con la versión secuencial.
+
+* Normalización de tiempos a UTC
+  * Todas las métricas de tiempo se calculan en minutos UTC usando GMT de aeropuertos, corrigiendo cruces de medianoche con sumas de 24*60. Esto garantiza consistencia en los criterios aun bajo paralelización.
 
 ### 6.3. Correctitud de la versión paralela
 
-**(Justificar ausencia de carreras y equivalencia con la versión secuencial.)**
+* Ausencia de carreras
+  * No se utilizan estructuras mutables compartidas entre hilos. Las listas de itinerarios y los conjuntos de visitados se crean y se pasan por valor, manteniendo la inmutabilidad.
+  * Las colecciones paralelas operan sobre datos inmutables y retornan nuevos resultados sin efectos laterales, evitando condiciones de carrera.
+
+* Equivalencia semántica con la versión secuencial
+  * itinerariosPar sigue el mismo DFS y criterio de evitación de ciclos que la versión secuencial, solo que recorre vuelos en paralelo. El caso base y las extensiones de itinerario son equivalentes.
+  * itinerariosTiempoPar calcula exactamente la misma métrica de tiempo total (suma de tiempos en aire y esperas) que itinerariosTiempo; la diferencia es que paraleliza tanto la generación de itinerarios como el cálculo interno de métricas.
+  * itinerariosEscalasPar usa la misma fórmula de escalas que itinerariosEscalas, con paralelismo de datos para acelerar la evaluación.
+  * itinerariosAirePar mantiene la misma definición de tiempo en aire que itinerariosAire, pero optimiza con paralelización por umbral en itinerarios largos y divide y vencerás en listas grandes.
+  * itinerarioSalidaPar reutiliza la misma lógica de tiempo total y diferencia respecto a la cita que la versión secuencial, paralelizando generación y evaluación por itinerario, por lo que su selección del itinerario óptimo es equivalente.
+
+* Manejo correcto de cruces de día y diferencias horarias
+  * Las funciones paralelas conservan la normalización a UTC y la corrección de tiempos negativos con sumas de 24*60, garantizando que los cálculos de métricas sean coherentes con la versión secuencial en todos los casos.
+
+* Selección estable y determinista bajo criterios
+  * La comparación y ordenamiento por métricas (sortBy) opera sobre valores deterministas calculados funcionalmente. La paralelización no altera el criterio de orden ni el conjunto de candidatos, y la toma de los tres primeros mantiene el mismo resultado que la versión secuencial cuando los datos son iguales.
 
 ---
 
