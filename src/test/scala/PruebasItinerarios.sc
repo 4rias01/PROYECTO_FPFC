@@ -95,32 +95,9 @@ object WorksheetDePruebas {
     println(s"\nResumen: ${resultados._1} de ${resultados._2} pruebas correctas")
   }
 
-  // 4. Medición de rendimiento usando Future (concurrente)
-  def medirRendimientoConcurrente(origen: String, destino: String): Future[(Double, Double)] = {
-    import ExecutionContext.Implicits.global
+  
 
-    def medirTiempo(ejecucion: => List[Itinerario]): Future[Double] = Future {
-      // Warm-up
-      (1 to 3).foreach(_ => ejecucion)
-
-      // Mediciones
-      val tiempos = (1 to 7).map { _ =>
-        val inicio = System.nanoTime()
-        ejecucion
-        val fin = System.nanoTime()
-        (fin - inicio) / 1_000_000.0
-      }
-
-      tiempos.tail.sum / (tiempos.length - 1) // Ignorar primera medición
-    }
-
-    for {
-      tiempoSec <- medirTiempo(itinerarios(vuelos, aeropuertos)(origen, destino))
-      tiempoPar <- medirTiempo(itinerariosPar(vuelos, aeropuertos)(origen, destino))
-    } yield (tiempoSec, tiempoPar)
-  }
-
-  // 5. Prueba de rendimiento 
+  // 4. Prueba de rendimiento 
   def pruebaRendimientoFuncional(): Unit = {
     println("\n" + "=" * 60)
     println("PRUEBA DE RENDIMIENTO SECUENCIAL VS CONCURRENTE")
@@ -132,10 +109,10 @@ object WorksheetDePruebas {
     
   }
 
-  // 6. Análisis de datos usando operaciones funcionales
+  // 5. Análisis de datos 
   def analisisDatosFuncional(): Unit = {
     println("\n" + "=" * 60)
-    println("ANALISIS FUNCIONAL DE DATOS")
+    println("ANALISIS DE DATOS DE ENTRADA")
     println("=" * 60)
 
     // Estadísticas usando funciones de orden superior
