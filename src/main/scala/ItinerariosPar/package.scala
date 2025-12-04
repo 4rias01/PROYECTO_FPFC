@@ -447,7 +447,7 @@ package object ItinerariosPar {
         obtenerItinerariosPar(c1, c2)
 
       if (todosItinerarios.isEmpty) {
-        null
+        Nil
       } else {
         val itinerariosConDiferencia: List[(Itinerario, Int)] =
           todosItinerarios

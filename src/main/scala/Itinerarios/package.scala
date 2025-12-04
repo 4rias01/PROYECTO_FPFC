@@ -346,7 +346,7 @@ package object Itinerarios {
     (c1: String, c2: String, h: Int, m: Int) => {
       val todosItinerarios = itinerariosPosibles(c1, c2)
       if(todosItinerarios.isEmpty){
-        null
+        Nil
       }
       else{
         val itinerariosConDiferencia = todosItinerarios.map { it =>

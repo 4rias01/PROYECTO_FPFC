@@ -6,6 +6,7 @@ import scala.concurrent.duration._
 import scala.util.{Try, Success, Failure}
 import scala.collection.parallel.CollectionConverters._
 
+
 object WorksheetDePruebas {
 
   val vuelos = Datos.vuelosCurso
@@ -35,17 +36,24 @@ object WorksheetDePruebas {
   }
 
   // 2. Prueba de una ruta específica (funcional puro)
-  def probarRuta(origen: String, destino: String, descripcion: String, h: Int, m: Int): (Itinerario, Itinerario) = {
+  def probarRuta(origen: String, destino: String, descripcion: String): (List[Itinerario], List[Itinerario]) = {
     println(s"\n[Prueba] $descripcion")
     println(s"         Ruta: $origen -> $destino")
 
-    val resultadoSecuencial = Try(itinerarioSalida(vuelos, aeropuertos)(origen, destino, h, m))
-    val resultadoParalelo = Try(itinerarioSalidaPar(vuelos, aeropuertos)(origen, destino, h, m))
+    val resultadoSecuencial = Try(itinerariosAire(vuelos, aeropuertos)(origen, destino))
+    val resultadoParalelo = Try(itinerariosAirePar(vuelos, aeropuertos)(origen, destino))
 
     (resultadoSecuencial, resultadoParalelo) match {
       case (Success(sec), Success(par)) =>
-        println(s"  Secuencial: ${sec.map(v => s"${v.Org}->${v.Dst}").mkString(" -> ")}")
-        println(s"  Paralelo:   ${par.map(v => s"${v.Org}->${v.Dst}").mkString(" -> ")}")
+        println(s"  Secuencial: ${sec.size} itinerario(s)")
+        println(s"  Paralelo:   ${par.size} itinerario(s)")
+
+        if (sec.nonEmpty) {
+          sec.zipWithIndex.foreach { case (it, i) =>
+            val ruta = it.map(v => s"${v.Org}->${v.Dst}").mkString(" -> ")
+            println(s"    ${i + 1}. $ruta")
+          }
+        }
 
         if (sec == par) {
           println("  RESULTADO: Correcto - algoritmos coinciden")
@@ -71,16 +79,15 @@ object WorksheetDePruebas {
     println("=" * 60)
 
     val pruebas = List(
-      ("MID", "SVCS", "Ruta directa MID -> SVCS (AIRVZLA 601)", 6, 30),
-      ("CLO", "SVO", "Ruta con escalas CLO -> SVO", 8, 0),
-      //da error cuando no se encuentran itinerarios, probe colocando que devuelva Nil pero sigue igual
-      //("CLO", "HND", "Ruta inexistente CLO -> HND", 14, 0),
-      ("BOG", "MEX", "Ruta directa BOG -> MEX (LATAM 787)", 19, 30),
-      ("CLO", "IST", "Ruta CLO -> IST (TURKISH 7799)", 2, 0)
+      ("MID", "SVCS", "Ruta directa MID -> SVCS (AIRVZLA 601)"),
+      ("CLO", "SVO", "Ruta con escalas CLO -> SVO"),
+      ("CLO", "HND", "Ruta inexistente CLO -> HND"),
+      ("BOG", "MEX", "Ruta directa BOG -> MEX (LATAM 787)"),
+      ("CLO", "IST", "Ruta CLO -> IST (TURKISH 7799)")
     )
 
-    val resultados = pruebas.foldLeft((0, 0)) { case ((correctas, totales), (origen, destino, desc, h, m)) =>
-      val (sec, par) = probarRuta(origen, destino, desc, h, m)
+    val resultados = pruebas.foldLeft((0, 0)) { case ((correctas, totales), (origen, destino, desc)) =>
+      val (sec, par) = probarRuta(origen, destino, desc)
       val esCorrecta = sec == par
       val nuevasCorrectas = if (esCorrecta) correctas + 1 else correctas
       (nuevasCorrectas, totales + 1)
