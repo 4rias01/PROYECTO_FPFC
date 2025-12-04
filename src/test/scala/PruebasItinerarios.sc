@@ -5,11 +5,13 @@ import scala.concurrent.{Future, Await, ExecutionContext}
 import scala.concurrent.duration._
 import scala.util.{Try, Success, Failure}
 import scala.collection.parallel.CollectionConverters._
+import org.scalameter._
+
 
 object WorksheetDePruebas {
 
-  val vuelos = Datos.vuelosCurso
-  val aeropuertos = Datos.aeropuertosCurso
+  val vuelos = Datos.vuelos.take(100)  // Limitar vuelos con take
+  val aeropuertos = Datos.aeropuertos  
 
   // 1. Información de datos usando funciones puras
   def mostrarInformacionDatos(): Unit = {
@@ -22,7 +24,8 @@ object WorksheetDePruebas {
 
     println(s"\nAeropuertos disponibles ($numAeropuertos):")
     aeropuertos.foreach { a =>
-      println(f"  ${a.Cod}%4s - GMT: ${a.GMT}%4d")
+      //activar si se quieren ver los vuelos
+      //println(f"  ${a.Cod}%4s - GMT: ${a.GMT}%4d")
     }
 
     println(s"\nVuelos disponibles ($numVuelos):")
@@ -36,8 +39,9 @@ object WorksheetDePruebas {
 
   // 2. Prueba de una ruta específica (funcional puro)
   def probarRuta(origen: String, destino: String, descripcion: String): (List[Itinerario], List[Itinerario]) = {
-    println(s"\n[Prueba] $descripcion")
-    println(s"         Ruta: $origen -> $destino")
+    //activar si se quiere ver los itinerarios que devuelve
+    //println(s"\n[Prueba] $descripcion")
+    //println(s"         Ruta: $origen -> $destino")
 
     val resultadoSecuencial = Try(itinerarios(vuelos, aeropuertos)(origen, destino))
     val resultadoParalelo = Try(itinerariosPar(vuelos, aeropuertos)(origen, destino))
@@ -69,7 +73,7 @@ object WorksheetDePruebas {
         println(s"  ERROR en paralelo: ${e.getMessage}")
         (Nil, Nil)
     }
-  }  // <-- ¡FALTABA ESTA LLAVE DE CIERRE!
+  }
 
   // 3. Ejecutar todas las pruebas usando fold
   def ejecutarPruebasCorreccion(): Unit = {
@@ -78,11 +82,11 @@ object WorksheetDePruebas {
     println("=" * 60)
 
     val pruebas = List(
-      ("MID", "SVCS", "Ruta directa MID -> SVCS (AIRVZLA 601)"),
-      ("CLO", "SVO", "Ruta con escalas CLO -> SVO"),
-      ("CLO", "HND", "Ruta inexistente CLO -> HND"),
-      ("BOG", "MEX", "Ruta directa BOG -> MEX (LATAM 787)"),
-      ("CLO", "IST", "Ruta CLO -> IST (TURKISH 7799)")
+      ("HOU", "MSY", "Ruta directa HOU -> MSY (4X 373)"),
+      ("MSY", "HOU", "Ruta con escalas MSY -> HOU (4X 201)"),
+      ("MSY", "DFW", "Ruta con escalas MSY -> DFW (4X 213)"),
+      ("MSY", "ORD", "Ruta con escalas MSY -> ORD (4X 374)"),
+      ("ORD", "RDU", "Ruta con escalas ORD -> RDU (AA 520)"),
     )
 
     val resultados = pruebas.foldLeft((0, 0)) { case ((correctas, totales), (origen, destino, desc)) =>
@@ -95,21 +99,52 @@ object WorksheetDePruebas {
     println(s"\nResumen: ${resultados._1} de ${resultados._2} pruebas correctas")
   }
 
-  
-
-  // 4. Prueba de rendimiento 
+  // 4. Prueba de rendimiento usando ScalaMeter
   def pruebaRendimientoFuncional(): Unit = {
     println("\n" + "=" * 60)
     println("PRUEBA DE RENDIMIENTO SECUENCIAL VS CONCURRENTE")
+    println("=" * 60)
 
+    // ScalaMeter: configuración de las mediciones
+    val configScalameter = config(
+      KeyValue(Key.exec.minWarmupRuns -> 20),
+      KeyValue(Key.exec.maxWarmupRuns -> 60),
+      KeyValue(Key.verbose -> false)
+    )
 
-    println("EN CONSTRUCCION JEJEJE")
+    // Función para medir el rendimiento de un algoritmo
+    def medirTiempo(algoritmo: (String, String) => List[Itinerario], origen: String, destino: String): Double = {
+      val tiempo = configScalameter withWarmer new Warmer.Default measure {
+        algoritmo(origen, destino)
+      }
+      tiempo.value
+    }
+
+    // Rutas para probar
+    val rutas = List(
+      ("HOU", "MSY"),
+      ("MSY", "HOU"),
+      ("MSY", "DFW"),
+      ("MSY", "ORD"),
+      ("ORD", "RDU"),
+    )
+
+    // Ejecutar las pruebas de rendimiento comparando la versión secuencial y paralela
+    rutas.foreach { case (origen, destino) =>
+      val tiempoSecuencial = medirTiempo(itinerarios(vuelos.take(100), aeropuertos), origen, destino)
+      val tiempoParalelo = medirTiempo(itinerariosPar(vuelos.take(100), aeropuertos), origen, destino)
+      val speedUp = tiempoSecuencial / tiempoParalelo
+
+      println(s"\nRuta: $origen -> $destino")
+      println(s"  Tiempo secuencial: $tiempoSecuencial ms")
+      println(s"  Tiempo paralelo:   $tiempoParalelo ms")
+      println(s"  Speed-up:          $speedUp")
+    }
 
     println("=" * 60)
-    
   }
 
-  // 5. Análisis de datos 
+  // 5. Análisis de datos usando operaciones funcionales
   def analisisDatosFuncional(): Unit = {
     println("\n" + "=" * 60)
     println("ANALISIS DE DATOS DE ENTRADA")
@@ -141,7 +176,7 @@ object WorksheetDePruebas {
     }
   }
 
-  // 7. Ejecución principal funcional
+  // 6. Ejecución principal funcional
   def ejecutarTodasPruebas(): Unit = {
     Try {
       mostrarInformacionDatos()
