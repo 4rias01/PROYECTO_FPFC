@@ -1,8 +1,8 @@
-import common.*
-import Datos.*
+import common._
+import Datos._
 
 import scala.annotation.tailrec
-import scala.collection.parallel.CollectionConverters.*
+import scala.collection.parallel.CollectionConverters._
 package object ItinerariosPar {
 
   /**
@@ -108,7 +108,7 @@ package object ItinerariosPar {
    * dividir el cálculo de una única unidad de trabajo en subcómputos que pueden
    * ejecutarse simultáneamente.
    */
- def itinerariosTiempoPar(
+  def itinerariosTiempoPar(
                             vuelos: List[Vuelo],
                             aeropuertos: List[Aeropuerto]
                           ): (String, String) => List[Itinerario] = {
@@ -280,14 +280,15 @@ package object ItinerariosPar {
 
     (cod1: String, cod2: String) => {
 
-      def tiemposPar(it: List[Itinerario])(f:Itinerario => Double): List[Double] = {
+      def tiemposPar(it: List[Itinerario])(f: Itinerario => Double): List[Double] = {
         val umbral = 20
-        if(it.length <= umbral)
+        if (it.length <= umbral) {
           it.map(f)
-        else
-          val (a,b) = it.splitAt(it.length / 2)
-          val (izq,der) = parallel(tiemposPar(a)(f),tiemposPar(b)(f))
+        } else {
+          val (a, b) = it.splitAt(it.length / 2)
+          val (izq, der) = parallel(tiemposPar(a)(f), tiemposPar(b)(f))
           izq ++ der
+        }
       }
 
       val ListaItinenarios = itinerariosPosibles(cod1, cod2)
@@ -446,7 +447,7 @@ package object ItinerariosPar {
         obtenerItinerariosPar(c1, c2)
 
       if (todosItinerarios.isEmpty) {
-        null
+        Nil
       } else {
         val itinerariosConDiferencia: List[(Itinerario, Int)] =
           todosItinerarios
