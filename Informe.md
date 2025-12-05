@@ -934,6 +934,48 @@ Las soluciones paralelas implementadas se encuentran en el archivo ItinerariosPa
   * Tamaño real usado en las pruebas: ≈ 150 vuelos.
   * Observación relevante: con este tamaño de problema las ganancias por paralelismo son despreciables; la aceleración es inexistente y con frecuencia el tiempo paralelo empeora.
 
+### 7.2 Resultados obtenidos
+
+#### Tabla 1: Tiempos de Ejecución (ms) – Versiones Secuenciales vs Paralelas
+
+| Función             | Ruta      | Secuencial (ms) | Paralelo (ms) | Speed-up |
+|---------------------|-----------|------------------|----------------|----------|
+| itinerarios()       | ORD → TPA | 5.14             | 14.19          | 0.36     |
+|                     | DFW → ORD | 9.67             | 20.61          | 0.47     |
+|                     | HOU → BNA | 53.58            | 115.13         | 0.47     |
+|                     | SEA → MIA | 6.26             | 15.37          | 0.41     |
+|                     | ABQ → TPA | 0.00             | 0.12           | 0.04     |
+| itinerariosTiempo() | ORD → TPA | 8.10             | 15.18          | 0.53     |
+|                     | DFW → ORD | 9.64             | 22.82          | 0.42     |
+|                     | HOU → BNA | 60.58            | 109.19         | 0.55     |
+|                     | SEA → MIA | 6.83             | 14.60          | 0.47     |
+|                     | ABQ → TPA | 0.00             | 0.11           | 0.04     |
+| itinerariosEscalas()| ORD → TPA | 6.51             | 13.23          | 0.49     |
+|                     | DFW → ORD | 12.16            | 23.08          | 0.53     |
+|                     | HOU → BNA | 55.01            | 117.96         | 0.47     |
+|                     | SEA → MIA | 7.10             | 15.18          | 0.47     |
+|                     | ABQ → TPA | 0.00             | 0.07           | 0.06     |
+| itinerariosAire()   | ORD → TPA | 12.04            | 15.26          | 0.79     |
+|                     | DFW → ORD | 13.69            | 21.08          | 0.65     |
+|                     | HOU → BNA | 59.08            | 129.01         | 0.46     |
+|                     | SEA → MIA | 8.19             | 19.66          | 0.42     |
+|                     | ABQ → TPA | 0.00             | 0.06           | 0.07     |
+| itinerarioSalida()  | ORD → TPA | 6.70             | 14.80          | 0.45     |
+|                     | DFW → ORD | 10.97            | 24.39          | 0.45     |
+|                     | HOU → BNA | 55.77            | 147.30         | 0.38     |
+|                     | SEA → MIA | 7.57             | 18.56          | 0.41     |
+|                     | ABQ → TPA | 0.00             | 0.17           | 0.02     |
+
+#### Tabla 2: Promedios por Función
+
+| Función             | Speed-up Promedio | Tiempo Secuencial Promedio (ms) | Tiempo Paralelo Promedio (ms) |
+|---------------------|--------------------|----------------------------------|-------------------------------|
+| itinerarios()       | 0.45               | 15.13                            | 33.08                         |
+| itinerariosTiempo() | 0.53               | 17.03                            | 32.42                         |
+| itinerariosEscalas()| 0.48               | 16.16                            | 33.91                         |
+| itinerariosAire()   | 0.50               | 18.60                            | 36.97                         |
+| itinerarioSalida()  | 0.39               | 16.20                            | 41.06                         |
+
 ### 7.3. Análisis
 
 * Resumen principal
