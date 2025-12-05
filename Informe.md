@@ -323,7 +323,7 @@ $$
 
 * Hipótesis de Inducción:
 
-Para todo aeropuerto intermedio A tal que existe un vuelo desde Org hasta A (es decir, $\exists v\in \text{vuelos}: v.\text{Org}=\text{Org}\land v.\text{Dst}=A$), y donde $A\notin \text{visitados}$, se cumple que:
+Para todo aeropuerto intermedio A tal que existe un vuelo desde Org hasta A (es decir, \( \exists v\in \text{vuelos}: v.\text{Org}=\text{Org}\land v.\text{Dst}=A \)), y donde \( A\notin \text{visitados} \), se cumple que:
 
 $$
 \text{buscarItinerarios}(A,\text{Dst},\text{visitados}\cup\{\text{Org}\},\text{itinerarioActual}\mathbin{:\!+}v)
@@ -352,8 +352,8 @@ $$
 
 #### Terminación
 
-1. El conjunto de aeropuertos es finito: $|\text{Aeropuertos}| = n < \infty$.
-2. En cada llamada recursiva se agrega Org al conjunto visitados: $\text{newVisitados} = \text{visitados} \cup \{\text{Org}\}$.
+1. El conjunto de aeropuertos es finito: \( |\text{Aeropuertos}| = n < \infty \).
+2. En cada llamada recursiva se agrega Org al conjunto visitados: \( \text{newVisitados} = \text{visitados} \cup \{\text{Org}\} \).
 3. Solo se consideran vuelos hacia aeropuertos no visitados: \( v.\text{Dst} \notin \text{visitados} \).
 4. Por tanto, \( |\text{visitados}| \) es estrictamente creciente en cada nivel de recursión: \( |\text{visitados}_{i+1}| = |\text{visitados}_i| + 1 \).
 5. Como \( |\text{visitados}| \le n \), el algoritmo debe alcanzar el caso base en a lo sumo n llamadas recursivas por rama.
@@ -436,7 +436,7 @@ $$
 h(it) = \left(\sum_{v\in it} v.\text{Esc}\right) + \big(|it| - 1\big)
 $$
 
-Sea P_h el programa numeroEscalas:
+Sea $P_h$ el programa numeroEscalas:
 
 $$
 \text{numeroEscalas}(it) = it.\text{map}(\_.\text{Esc}).\text{sum} + |it| - 1
