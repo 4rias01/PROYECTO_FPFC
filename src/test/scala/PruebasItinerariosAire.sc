@@ -7,6 +7,8 @@ import scala.util.{Try, Success, Failure}
 import scala.collection.parallel.CollectionConverters._
 import org.scalameter._
 
+
+//worksheet Itinerarios aire
 object WorksheetDePruebas {
 
   val vuelos = Datos.vuelos.take(200)

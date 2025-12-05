@@ -6,7 +6,7 @@ import scala.concurrent.duration._
 import scala.util.{Try, Success, Failure}
 import scala.collection.parallel.CollectionConverters._
 import org.scalameter._
-
+//worksheet itinerario Escalas
 object WorksheetDePruebas {
 
   val vuelos = Datos.vuelos.take(200)
