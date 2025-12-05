@@ -1,13 +1,14 @@
 # Proyecto Final de Programación Funcional y Concurrente
 
 <center>
-
 Escuela de Ingeniería de Sistemas y Computación
-
+</center>
+<center>
 <img src="Images/LogoSimboloUV.png" alt="LogoSimbolo Universidad Del Valle" width="100" height="120">
-
+</center>
+<center>
 Profesor Juan Francisco Díaz Frias
-
+</center>
 Grupo 6:
 
 * 202416285 Arias Rojas Santiago
@@ -15,6 +16,7 @@ Grupo 6:
 * 202418804 Aragon Alvarez Steven Fernando
 * 202416541 González Rosero Andrés Gerardo
 
+<center>
 Diciembre de 2025
 </center>
 
@@ -149,6 +151,16 @@ En resumen, la elección de .par/ParSeq se concentra en etapas con alto paraleli
 
 ## 4. Solución secuencial
 
+Las soluciones secuenciales se implementan en Itinerarios/package.scala, siguiendo un enfoque funcional puro que enfatiza la claridad y la expresividad. A continuación se describen los aspectos clave del diseño y las funciones implementadas. Si se desea ahondar mas en los conceptos de se puede desplezar a los apendices al final del documento, a continuación listados.
+
+* [[#9.1 Apéndice A — Tabla 1 Uso de la recursión]]
+* [[#9.2 Apéndice B — Tabla 2 Reconocimiento de patrones]]
+* [[#9.3 Apéndice C — Tabla 3 Uso del mecanismo de encapsulación]]
+* [[#9.4 Apéndice D — Tabla 4 Uso de funciones de alto orden]]
+* [[#9.5 Apéndice E — Tabla 5 Uso de colecciones]]
+* [[#9.6 Apéndice F — Tabla 6 Uso de expresiones for]]
+* [[#9.7 Apéndice G — Tabla 7 Uso de iteradores]]
+
 ### 4.1. Diseño general
 
 La solución secuencial se implementa de forma declarativa y funcional, apoyándose en recursión, funciones de orden superior y pattern matching sobre listas y case classes. El enfoque evita mutabilidad y efectos secundarios, lo cual facilita el razonamiento y la correctitud.
@@ -275,7 +287,10 @@ Para demostrar que buscarItinerarios es correcta, debemos probar que:
 
 $$
 \forall\ \text{Org},\ \text{Dst}\in \text{Aeropuertos}:\quad
-\text{buscarItinerarios}(\text{Org},\text{Dst},\varnothing,[]) = \text{TodosLosItinerarios}(\text{Org},\text{Dst},\text{visitados},\text{itinerarioActual})
+\text{buscarItinerarios}(\text{Org},\text{Dst},\varnothing,[]) =
+$$
+$$
+\text{TodosLosItinerarios}(\text{Org},\text{Dst},\text{visitados},\text{itinerarioActual})
 $$
 
 donde TodosLosItinerarios(Org, Dst, visitados, itinerarioActual) representa el conjunto de todos los itinerarios válidos sin ciclos desde Org hasta Dst.
@@ -284,8 +299,12 @@ Esta función emplea el uso de expresiones for y un llamado a sí misma, por lo 
 
 $$
 \text{vuelos}
-.\text{filter}\big(v \Rightarrow (v.\text{Org}=\text{Org})\land (v.\text{Dst}\notin \text{visitados})\big)
-.\text{flatMap}\big(v \Rightarrow \text{buscarItinerarios}(v.\text{Dst},\text{Dst},\text{visitados}\cup\{\text{Org}\},\text{itinerarioActual}\mathbin{:\!+}v)\big)
+.\text{filter}\big(v \Rightarrow (v.\text{Org}=
+\text{Org})\land (v.\text{Dst}\notin \text{visitados})\big)
+.\text{flatMap}
+$$
+$$
+\big(v \Rightarrow \text{buscarItinerarios}(v.\text{Dst},\text{Dst},\text{visitados}\cup\{\text{Org}\},\text{itinerarioActual}\mathbin{:\!+}v)\big)
 $$
 
 Definimos el conjunto de vuelos válidos desde Org respetando el conjunto de visitados:
@@ -300,7 +319,8 @@ $$
 \text{buscarItinerarios}(\text{Org},\text{Dst},\text{visitados},\text{itinerarioActual})
 
 =
-
+$$
+$$
 \bigoplus_{v\in V_{\text{válidos}}}
 \text{buscarItinerarios}(v.\text{Dst},\text{Dst},\text{visitados}\cup\{\text{Org}\},\text{itinerarioActual}\mathbin{:\!+}v)
 $$
@@ -328,6 +348,8 @@ Para todo aeropuerto intermedio A tal que existe un vuelo desde Org hasta A (es 
 $$
 \text{buscarItinerarios}(A,\text{Dst},\text{visitados}\cup\{\text{Org}\},\text{itinerarioActual}\mathbin{:\!+}v)
 =
+$$
+$$
 \text{TodosLosItinerarios}(A,\text{Dst},\text{visitados}\cup\{\text{Org}\},\text{itinerarioActual}\mathbin{:\!+}v)
 $$
 
@@ -336,27 +358,49 @@ $$
 Si Org ≠ Dst, por sustitución y la HI:
 
 $$
-\begin{aligned}
-\text{buscarItinerarios}(\text{Org},\text{Dst},\text{visitados},\text{itinerarioActual})
-&=
+\text{buscarItinerarios}
+(\text{Org},\text{Dst},\text{visitados},\text{itinerarioActual})
+=
 \bigoplus_{v\in V_{\text{válidos}}}
-\text{buscarItinerarios}(v.\text{Dst},\text{Dst},\text{visitados}\cup\{\text{Org}\},\text{itinerarioActual}\mathbin{:\!+}v)
-\\
-&=
+\text{buscarItinerarios}(v.\text{Dst},\text{Dst},
+$$
+
+$$
+\text{visitados}\cup\{\text{Org}\},
+\text{itinerarioActual}\mathbin{:\!+}v)
+$$
+
+$$
+\text{buscarItinerarios}
+(\text{Org},\text{Dst},\text{visitados},\text{itinerarioActual})
+=
 \bigoplus_{v\in V_{\text{válidos}}}
-\text{TodosLosItinerarios}(v.\text{Dst},\text{Dst},\text{visitados}\cup\{\text{Org}\},\text{itinerarioActual}\mathbin{:\!+}v)
-\\
-&= \text{TodosLosItinerarios}(\text{Org},\text{Dst},\text{visitados},\text{itinerarioActual})
-\end{aligned}
+\text{TodosLosItinerarios}(v.\text{Dst},\text{Dst},
+$$
+
+$$
+\text{visitados}\cup\{\text{Org}\},
+\text{itinerarioActual}\mathbin{:\!+}v)
+$$
+
+$$
+\text{buscarItinerarios}
+(\text{Org},\text{Dst},\text{visitados},\text{itinerarioActual})
+=
+\text{TodosLosItinerarios}(\text{Org},\text{Dst},
+$$
+
+$$
+\text{visitados},\text{itinerarioActual})
 $$
 
 #### Terminación
 
-1. El conjunto de aeropuertos es finito: \( |\text{Aeropuertos}| = n < \infty \).
-2. En cada llamada recursiva se agrega Org al conjunto visitados: \( \text{newVisitados} = \text{visitados} \cup \{\text{Org}\} \).
-3. Solo se consideran vuelos hacia aeropuertos no visitados: \( v.\text{Dst} \notin \text{visitados} \).
-4. Por tanto, \( |\text{visitados}| \) es estrictamente creciente en cada nivel de recursión: \( |\text{visitados}_{i+1}| = |\text{visitados}_i| + 1 \).
-5. Como \( |\text{visitados}| \le n \), el algoritmo debe alcanzar el caso base en a lo sumo n llamadas recursivas por rama.
+1. El conjunto de aeropuertos es finito:  $|\text{Aeropuertos}| = n < \infty$.
+2. En cada llamada recursiva se agrega Org al conjunto visitados: $\text{newVisitados} = \text{visitados} \cup \{\text{Org}\}$.
+3. Solo se consideran vuelos hacia aeropuertos no visitados: $v.\text{Dst} \notin \text{visitados}$.
+4. Por tanto, $|\text{visitados}|$ es estrictamente creciente en cada nivel de recursión:  $|\text{visitados}_{i+1}| = |\text{visitados}_i| + 1$.
+5. Como $|\text{visitados}| \le n$, el algoritmo debe alcanzar el caso base en a lo sumo n llamadas recursivas por rama.
 6. El número de ramas está acotado por los vuelos salientes en cada nivel, y también es finito.
 
 Conclusión: Hemos demostrado por inducción estructural que:
@@ -364,6 +408,8 @@ Conclusión: Hemos demostrado por inducción estructural que:
 $$
 \forall\ \text{Org},\ \text{Dst}:\quad
 \text{buscarItinerarios}(\text{Org},\text{Dst},\text{visitados},\text{itinerarioActual})
+$$
+$$
 =
 \text{TodosLosItinerarios}(\text{Org},\text{Dst},\text{visitados},\text{itinerarioActual})
 $$
@@ -460,11 +506,15 @@ Para todos vuelos, aeropuertos, origen y destino:
 $$
 P_g(vuelos, aeropuertos)(\text{origen}, \text{destino})
 =
+$$
+$$
 \text{take}_3\Big(
 \text{sortBy}_{\text{numeroEscalas}}
 \big(\text{itinerarios}(vuelos,aeropuertos)(\text{origen},\text{destino})\big)
 \Big)
 =
+$$
+$$
 g(vuelos, aeropuertos)(\text{origen}, \text{destino})
 $$
 
@@ -596,7 +646,7 @@ $$
 \text{offsetMinutos}(\text{gmt}) = \left\lfloor \frac{\text{gmt}}{100}\right\rfloor \cdot 60
 $$
 
-Dado un GMT definido como \( h \cdot 100 \), siendo h el número de horas de diferencia respecto a UTC, dividir por 100 recupera h y multiplicar por 60 convierte a minutos. Por definición, offsetMinutos = offset.
+Dado un GMT definido como  $h \cdot 100$, siendo h el número de horas de diferencia respecto a UTC, dividir por 100 recupera h y multiplicar por 60 convierte a minutos. Por definición, offsetMinutos = offset.
 
 ##### 5.3.1.2 minutosUTC
 
@@ -676,7 +726,7 @@ $$
 
 #### 5.3.2 Corrección de calcularDiferenciaSalida (función recursiva de cola)
 
-Sea \( g: \mathbb{Z}\times \mathbb{Z}\times \mathbb{Z} \to \mathbb{Z} \) la función que, dados:
+Sea  $g: \mathbb{Z}\times \mathbb{Z}\times \mathbb{Z} \to \mathbb{Z}$ la función que, dados:
 
 * salidaUTC: hora de salida en minutos UTC,
 * duracion: duración del itinerario en minutos,
@@ -686,9 +736,9 @@ retorna la diferencia en minutos entre la hora de la cita y la última hora de s
 
 Proceso iterativo formal:
 
-* Estado \( s \equiv (\text{salidaUTC}, \text{duracion}, \text{citaUTC}) \).
-* Estado inicial \( s_0 \equiv (\text{salidaUTC}_0, \text{duracion}, \text{citaUTC}) \).
-* Estado final \( s_f \) tal que \( \text{salidaUTC} + \text{duracion} \le \text{citaUTC} \).
+* Estado $s \equiv (\text{salidaUTC}, \text{duracion}, \text{citaUTC})$.
+* Estado inicial $s_0 \equiv (\text{salidaUTC}_0, \text{duracion}, \text{citaUTC})$.
+* Estado final $s_f$ tal que $\text{salidaUTC} + \text{duracion} \le \text{citaUTC}$.
 * Invariante:
   $$
   \text{Inv}(s) \equiv (\text{duracion y citaUTC constantes}) \land (\text{salidaUTC válida})
@@ -701,20 +751,20 @@ Proceso iterativo formal:
 
 Demostración por invariante:
 
-1. \( \text{Inv}(s_0) \): trivially true por parámetros válidos.
-2. Si \( s_i \ne s_f \land \text{Inv}(s_i) \Rightarrow \text{Inv}(s_{i+1}) \):
-   si \( \text{salidaUTC}_i + \text{duracion} > \text{citaUTC} \), entonces
-   \( s_{i+1} = (\text{salidaUTC}_i - 1440, \text{duracion}, \text{citaUTC}) \);
+1. $\text{Inv}(s_0)$: trivially true por parámetros válidos.
+2. Si $s_i \ne s_f \land \text{Inv}(s_i) \Rightarrow \text{Inv}(s_{i+1})$:
+   si $\text{salidaUTC}_i + \text{duracion} > \text{citaUTC}$, entonces
+   $s_{i+1} = (\text{salidaUTC}_i - 1440, \text{duracion}, \text{citaUTC})$;
    se preservan duracion y citaUTC, y salidaUTC sigue siendo representable.
-3. En el estado final \( s_f \):
+3. En el estado final $s_f$:
    respuesta:
    $$
    \text{respuesta}(s_f) = \text{citaUTC} - \text{salidaUTC}_f = g(\text{salidaUTC}_0,\text{duracion},\text{citaUTC})
    $$
    es la última salida válida; salir más tarde (sumando 1440) no llega a tiempo.
 4. Terminación:
-   en cada iteración \( \text{salidaUTC} \) decrece 1440, y la diferencia
-   \( (\text{salidaUTC}+\text{duracion}) - \text{citaUTC} \) es finita; eventualmente se cumple la condición final.
+   en cada iteración $\text{salidaUTC}$ decrece 1440, y la diferencia
+   $(\text{salidaUTC}+\text{duracion}) - \text{citaUTC}$ es finita; eventualmente se cumple la condición final.
 
 Por tanto, calcularDiferenciaSalida es correcta.
 
@@ -725,7 +775,10 @@ Sea difItinerario: (Itinerario, Int, Int) → ℤ la función que calcula la dif
 Definición:
 
 $$
-\text{diferenciaItinerario}(it,\ \text{horaCita},\ \text{minutoCita}) =
+\text{diferenciaItinerario}(it,\ \text{horaCita},\ \text{minutoCita})
+$$
+$$
+=
 \begin{cases}
 \text{Int.MaxValue}, & \text{si } it = []\\[4pt]
 \text{calcularDiferenciaSalida}(\text{salidaUTC},\ \text{duracion},\ \text{citaUTC}),
@@ -765,7 +818,10 @@ $$
 \text{argmin}_{it}\ \text{diferenciaItinerario}(it,h,m)
 =
 \Big(\text{minBy}_{(it,\ \text{diff})} \big(\text{diff}\big)\Big).\_1
-\quad \text{con }\ (it,\ \text{diff}) \in
+\quad \text{con }
+$$
+$$
+\ (it,\ \text{diff}) \in
 \big\{(it,\ \text{diferenciaItinerario}(it,h,m))\big\}
 $$
 
@@ -777,7 +833,10 @@ Interpretación:
 Conclusión general:
 
 $$
-\forall\ \text{vuelos},\ \text{aeropuertos},\ c_1,\ c_2,\ h,\ m:\quad
+\forall\ \text{vuelos},\ \text{aeropuertos},\ c_1,\ c_2,\ h,\
+$$
+$$
+m:\quad
 \text{itinerarioSalida}(\text{vuelos},\ \text{aeropuertos})(c_1,c_2,h,m) = f(\text{vuelos},\ \text{aeropuertos})(c_1,c_2,h,m)
 $$
 
@@ -786,6 +845,16 @@ Retorna correctamente el itinerario que permite llegar a tiempo a la cita y sali
 ---
 
 ## 6. Soluciones paralelas
+
+Las soluciones paralelas implementadas se encuentran en el archivo ItinerariosPar.scala. A continuación se describen las modificaciones realizadas respecto a la versión secuencial, las técnicas de paralelización utilizadas y la justificación de la correctitud de la versión paralela. Si se desea consultar función por función, se pueden revisar los apendices al final del documento, a continuación listados.
+
+* [[#9.1 Apéndice A — Tabla 1 Uso de la recursión]]
+* [[#9.2 Apéndice B — Tabla 2 Reconocimiento de patrones]]
+* [[#9.3 Apéndice C — Tabla 3 Uso del mecanismo de encapsulación]]
+* [[#9.4 Apéndice D — Tabla 4 Uso de funciones de alto orden]]
+* [[#9.5 Apéndice E — Tabla 5 Uso de colecciones]]
+* [[#9.6 Apéndice F — Tabla 6 Uso de expresiones for]]
+* [[#9.7 Apéndice G — Tabla 7 Uso de iteradores]]
 
 ### 6.1. Qué se paralelizó
 
