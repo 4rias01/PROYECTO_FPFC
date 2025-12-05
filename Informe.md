@@ -917,15 +917,59 @@ Las soluciones paralelas implementadas se encuentran en el archivo ItinerariosPa
 
 ### 7.1. Configuración del experimento
 
-**(Explicar datasets, número de mediciones y uso de ScalaMeter.)**
+* Objetivo
+  * Comparar tiempos de ejecución entre las versiones secuencial (Itinerarios) y paralela (ItinerariosPar) para las funciones representativas: itinerariosTiempo / itinerariosTiempoPar, itinerariosEscalas / itinerariosEscalasPar, itinerariosAire / itinerariosAirePar e itinerarioSalida / itinerarioSalidaPar.
+  * Calcular speedup y eficiencia, y verificar la equivalencia funcional de resultados entre versiones.
 
-### 7.2. Resultados
+* Hardware y software
+  * Máquina: Lenovo LOQ 15IHR8
+  * CPU: I5 12450H 8 nucleos (4P+4E) @ 4.4GHz
+  * Memoria RAM: 8 GB DDR5
+  * Sistema operativo: Arch Linux
+  * JVM: JDK 21
+  * Scala: 3.3.7
 
-**(Tablas comparando secuencial vs paralelo, incluir speedup.)**
+* Datos y tamaños de los datasets
+  * Origen de los datos: datasets proporcionados por el profesor.
+  * Tamaño real usado en las pruebas: ≈ 150 vuelos.
+  * Observación relevante: con este tamaño de problema las ganancias por paralelismo son despreciables; la aceleración es inexistente y con frecuencia el tiempo paralelo empeora.
 
 ### 7.3. Análisis
 
-**(Interpretar cuándo paralelizar fue útil, cuándo no, y por qué.)**
+* Resumen principal
+  * Con los datasets proporcionados por el profesor (y ≈ 150 vuelos) la aceleración observada es inexistente y, en la mayoría de las mediciones, la versión paralela empeora respecto a la secuencial.
+  * Causa principal: el tamaño y la granularidad del problema son demasiado pequeños para amortizar el overhead de las colecciones paralelas, particionado y coordinación de hilos.
+
+* Observaciones y causas
+  * Overhead de paralelismo
+    * Convertir colecciones a paralelas, particionar trabajo y coordinar hilos introduce un coste fijo que, en problemas pequeños, supera el ahorro por concurrencia.
+  * Granularidad del trabajo
+    * Las unidades de trabajo por itinerario y por tramo son demasiado pequeñas: muchas tareas muy finas generan overhead de scheduling.
+  * Umbrales no activados
+    * Los umbrales definidos en el código (umb = 5 y umbral = 20) hacen que, para la mayoría de itinerarios y listas generadas con los datos del profesor, no se alcance una paralelización efectiva.
+  * Variabilidad y GC
+    * Las ejecuciones paralelas muestran mayor varianza; en problemas pequeños la latencia de GC o del scheduler afecta notablemente los tiempos.
+  * Correctitud
+    * La paralelización no altera la semántica si las implementaciones devuelven resultados coincidentes; comprobar equivalencia funcional sigue siendo obligatorio para validar corrección.
+
+* Interpretación práctica
+  * No paralelizar para estos datasets
+    * Para los datos reales entregados por el profesor, usando un take de solo 150 (como hicimos), la versión paralela no aporta beneficios y suele empeorar el rendimiento. En el informe debe constar esa conclusión.
+  * Cuándo el paralelismo sería útil
+    * Si el número de itinerarios generados crece considerablemente (centenas/miles) o los itinerarios individuales son largos y costosos de evaluar, el paralelismo puede convertirse en beneficio neto.
+    * En máquinas con muchos núcleos físicos y baja contención de CPU.
+  * Acciones recomendadas si se desea demostrar paralelismo
+    * Generar datasets sintéticos más grandes para evidenciar el punto de corte donde speedup > 1.
+    * Ajustar los umbrales (umb y umbral) y reevaluar sensibilidad.
+    * Medir por fases (generación de itinerarios vs evaluación de métricas) para identificar dónde paralelizar con mayor impacto.
+
+* Recomendaciones de optimización
+  * Para cargas pequeñas, preferir la versión secuencial por simplicidad y menor overhead.
+  * Considerar optimizaciones secuenciales que reduzcan coste total: por ejemplo, precomputar Map[Cod -> List[Vuelo]] para acceder en O(1) a vuelos salientes y reducir trabajo de filtrado.
+  * Si se mantiene la paralelización, instrumentar y ajustar umbrales para evitar crear demasiadas tareas pequeñas.
+
+* Conclusión
+  * Con los datasets del profesor (tomando ≈ 150 vuelos) la paralelización no aporta aceleración medible; documentar esta constatación en el informe y, si se desea mostrar beneficios del paralelismo, incluir experimentos con datasets mayores o ajustes en la partición de trabajo.
 
 ---
 
