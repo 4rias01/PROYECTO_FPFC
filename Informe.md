@@ -261,17 +261,7 @@ Qué hace: Selecciona el itinerario que permite salir lo más tarde posible y au
 
 ## 5. Correctitud de las funciones
 
-### 5.1. Correctitud de `itinerarios`
 
-**(Explicar invariante, inducción, exhaustividad y terminación.)**
-
-### 5.2. Correctitud de una función de optimización
-
-**(Elegir Tiempo, Escalas o Aire y demostrar que la selección es correcta.)**
-
-### 5.3. Correctitud de `itinerarioSalida`
-
-**(Explicar filtro correcto, selección del máximo y completitud.)**
 
 ---
 
@@ -359,3 +349,112 @@ La implementación paralela mostró que, en escenarios con conjuntos de datos su
 Finalmente, la comparación de desempeño mediante ScalaMeter permitió cuantificar de manera rigurosa el impacto del paralelismo y validar que las versiones paralelas conservan la correctitud funcional de las versiones secuenciales. En conjunto, el proyecto ofrece una experiencia completa en el diseño, análisis y optimización de algoritmos funcionales y paralelos, aportando una comprensión más profunda del paradigma y sus aplicaciones prácticas.
 
 Parece muy importante agregar tambien que en este proyecto hemos podido poner en practica de manera mas profunda los conceptos aprendidos en clase, como la recursión, currificación y el uso de funciones de orden superior, lo cual ha enriquecido nuestra comprensión y habilidades en programación funcional. Todo el curso nos ha servido para entender mejor como pensar en terminos funcionales y como aplicar estos conceptos a problemas reales, lo cual es una habilidad valiosa en el desarrollo de software moderno, podemos incluso aplicar estos conocimientos en entornos de desarrollo multiparadigma, donde la programación funcional viene a complementar otros enfoques, mejorando la calidad y mantenibilidad del código, incluso lo simplifica (como es el caso de las funciones de alto orden, que dejan una solución mas elegante a problemas que antes se resolvian con patrones de diseño como el strategy o visitor). En resumen, este proyecto no solo ha sido una oportunidad para aplicar técnicas de programación funcional y paralela, sino también para consolidar y expandir nuestro entendimiento de estos conceptos fundamentales en la informática moderna.
+
+## 9. Apendices
+
+En esta sección se presentan tablas que resumen el uso de diversas características de programación funcional en las funciones implementadas, incluyendo recursión, reconocimiento de patrones, encapsulación, funciones de alto orden, colecciones, expresiones for, currificación, paralelismo y manejo de tiempos.
+
+### 9.1 Apéndice A — Tabla 1: Uso de la recursión
+
+| Función               | ¿Usa recursión? | Justificación                                             |
+| --------------------- | --------------- | --------------------------------------------------------- |
+| itinerarios           | Sí              | Implementa buscarItinerarios, que usa recursión de árbol. |
+| itinerariosTiempo     | No              | Usa itinerarios y funciones de alto orden.                |
+| itinerariosEscalas    | No              | No usa recursión.                                         |
+| itinerariosAire       | No              | No usa recursión.                                         |
+| itinerarioSalida      | Sí              | Recursión de cola en calcularDiferenciaSalida.            |
+| itinerariosPar        | Sí              | Recursión de árbol en buscarItinerariosPar.               |
+| itinerariosTiempoPar  | No              | No se llama a sí misma.                                   |
+| itinerariosEscalasPar | No              | No se llama a sí misma.                                   |
+| itinerariosAirePar    | Sí              | Recursión en tiempoAirePar y tiemposPar.                  |
+| itinerarioSalidaPar   | Sí              | Recursión de cola en calcularDiferenciaSalida.            |
+
+### 9.2 Apéndice B — Tabla 2: Reconocimiento de patrones
+
+| Función               | ¿Usa reconocimiento de patrones? | Justificación                                 |
+| --------------------- | -------------------------------- | --------------------------------------------- |
+| itinerarios           | No                               | No usa match-case.                            |
+| itinerariosTiempo     | Sí                               | Usa case List(v1, v2) en calcularTiempoTotal. |
+| itinerariosEscalas    | No                               | No usa match-case.                            |
+| itinerariosAire       | No                               | No usa match-case.                            |
+| itinerarioSalida      | Sí                               | Usa case List(v1, v2) en calcularTiempoTotal. |
+| itinerariosPar        | No                               | No usa reconocimiento de patrones.            |
+| itinerariosTiempoPar  | Sí                               | Usa case List(v1, v2).                        |
+| itinerariosEscalasPar | No                               | No usa match-case.                            |
+| itinerariosAirePar    | No                               | No usa match-case.                            |
+| itinerarioSalidaPar   | Sí                               | Usa case List(v1, v2).                        |
+
+### 9.3 Apéndice C — Tabla 3: Uso del mecanismo de encapsulación
+
+| Función               | ¿Usa encapsulamiento? | Justificación                                       |
+| --------------------- | --------------------- | --------------------------------------------------- |
+| itinerarios           | Sí                    | Contiene funciones internas como buscarItinerarios. |
+| itinerariosTiempo     | Sí                    | Contiene múltiples funciones auxiliares internas.   |
+| itinerariosEscalas    | Sí                    | Usa funciones internas como numeroEscalas.          |
+| itinerariosAire       | Sí                    | Usa funciones internas como tiempoEnAire.           |
+| itinerarioSalida      | Sí                    | Encapsula cálculos auxiliares internos.             |
+| itinerariosPar        | Sí                    | Usa funciones internas como buscarItinerariosPar.   |
+| itinerariosTiempoPar  | Sí                    | Usa funciones internas como calcularTiempoTotal.    |
+| itinerariosEscalasPar | Sí                    | Define escalasTotales internamente.                 |
+| itinerariosAirePar    | Sí                    | Define tiempoEnAirePar y tiemposPar.                |
+| itinerarioSalidaPar   | Sí                    | Usa funciones internas.                             |
+
+### 9.4 Apéndice D — Tabla 4: Uso de funciones de alto orden
+
+| Función               | ¿Usa funciones de alto orden? | Justificación                                         |
+| --------------------- | ----------------------------- | ----------------------------------------------------- |
+| itinerarios           | Sí                            | Retorna funciones y usa transformaciones funcionales. |
+| itinerariosTiempo     | Sí                            | Usa map y sortBy.                                     |
+| itinerariosEscalas    | Sí                            | Usa map y sortBy.                                     |
+| itinerariosAire       | Sí                            | Usa map y sortBy.                                     |
+| itinerarioSalida      | Sí                            | Usa map y minBy.                                      |
+| itinerariosPar        | Sí                            | Usa operaciones paralelas de orden superior.          |
+| itinerariosTiempoPar  | Sí                            | Usa map y sortBy.                                     |
+| itinerariosEscalasPar | Sí                            | Usa funciones de orden superior.                      |
+| itinerariosAirePar    | Sí                            | tiemposPar recibe funciones como parámetro.           |
+| itinerarioSalidaPar   | Sí                            | Usa map.                                              |
+
+### 9.5 Apéndice E — Tabla 5: Uso de colecciones
+
+| Función               | ¿Usa colecciones? | Justificación              |
+| --------------------- | ----------------- | -------------------------- |
+| itinerarios           | Sí                | Usa List y Set.            |
+| itinerariosTiempo     | Sí                | Usa List y Map.            |
+| itinerariosEscalas    | Sí                | Usa List.                  |
+| itinerariosAire       | Sí                | Usa List y Map.            |
+| itinerarioSalida      | Sí                | Usa List y Map.            |
+| itinerariosPar        | Sí                | Usa colecciones paralelas. |
+| itinerariosTiempoPar  | Sí                | Usa List y Map.            |
+| itinerariosEscalasPar | Sí                | Usa List.                  |
+| itinerariosAirePar    | Sí                | Usa List y Map.            |
+| itinerarioSalidaPar   | Sí                | Usa List y Map.            |
+
+### 9.6 Apéndice F — Tabla 6: Uso de expresiones for
+
+| Función               | ¿Usa expresiones for? | Justificación            |
+| --------------------- | --------------------- | ------------------------ |
+| itinerarios           | Sí                    | En buscarItinerarios.    |
+| itinerariosTiempo     | No                    | No usa for.              |
+| itinerariosEscalas    | No                    | No usa for.              |
+| itinerariosAire       | No                    | No usa for.              |
+| itinerarioSalida      | No                    | No usa for.              |
+| itinerariosPar        | Sí                    | En buscarItinerariosPar. |
+| itinerariosTiempoPar  | No                    | No usa for.              |
+| itinerariosEscalasPar | No                    | No usa for.              |
+| itinerariosAirePar    | No                    | No usa for.              |
+| itinerarioSalidaPar   | No                    | No usa for.              |
+
+### 9.7 Apéndice G — Tabla 7: Uso de iteradores
+
+| Función               | ¿Usa iteradores? | Justificación                            |
+| --------------------- | ---------------- | ---------------------------------------- |
+| itinerarios           | Sí               | El for usa iteradores internos.          |
+| itinerariosTiempo     | Sí               | Usa map, sortBy, sliding, sum.           |
+| itinerariosEscalas    | Sí               | Usa map, sortBy, sum.                    |
+| itinerariosAire       | Sí               | Usa map, sortBy, take.                   |
+| itinerarioSalida      | Sí               | Usa map, minBy, sum.                     |
+| itinerariosPar        | Sí               | Usa iteradores paralelos (splitters).    |
+| itinerariosTiempoPar  | Sí               | Usa iteradores paralelos y secuenciales. |
+| itinerariosEscalasPar | Sí               | Usa iteradores paralelos.                |
+| itinerariosAirePar    | Sí               | Usa map, zip, take.                      |
+| itinerarioSalidaPar   | Sí               | Usa operaciones que internamente iteran. |
