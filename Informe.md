@@ -261,7 +261,527 @@ Qué hace: Selecciona el itinerario que permite salir lo más tarde posible y au
 
 ## 5. Correctitud de las funciones
 
+### 5.1. Itinerarios
 
+Sea f: List[Vuelos] × List[Aeropuerto] → ((String, String) → List[Itinerario]) la función que, dados una lista de vuelos y una lista de aeropuertos, retorna una función que recibe dos códigos de aeropuertos (origen y destino) y devuelve todos los itinerarios posibles entre ellos sin ciclos.
+
+Sea también $P_f$ el programa itinerarios que pretende implementar esta funcionalidad.
+
+La función itinerarios retorna una función lambda que invoca a buscarItinerarios. Por lo tanto, para demostrar la corrección de itinerarios, debemos demostrar que buscarItinerarios es correcta.
+
+Corrección de buscarItinerarios: buscarItinerarios: (String, String, Set[String], Itinerario) → List[Itinerario] es una función recursiva de árbol que explora todos los caminos posibles desde un origen $Org$ hasta un destino $Dst$, manteniendo un conjunto de aeropuertos visitados y el itinerario construido hasta el momento.
+
+Para demostrar que buscarItinerarios es correcta, debemos probar que:
+
+$$
+\forall\ \text{Org},\ \text{Dst}\in \text{Aeropuertos}:\quad
+\text{buscarItinerarios}(\text{Org},\text{Dst},\varnothing,[]) = \text{TodosLosItinerarios}(\text{Org},\text{Dst},\text{visitados},\text{itinerarioActual})
+$$
+
+donde TodosLosItinerarios(Org, Dst, visitados, itinerarioActual) representa el conjunto de todos los itinerarios válidos sin ciclos desde Org hasta Dst.
+
+Esta función emplea el uso de expresiones for y un llamado a sí misma, por lo que será necesario usar el modelo de sustitución para simplificar el for en su equivalente con map, filter y flatMap. La expresión equivalente es:
+
+$$
+\text{vuelos}
+.\text{filter}\big(v \Rightarrow (v.\text{Org}=\text{Org})\land (v.\text{Dst}\notin \text{visitados})\big)
+.\text{flatMap}\big(v \Rightarrow \text{buscarItinerarios}(v.\text{Dst},\text{Dst},\text{visitados}\cup\{\text{Org}\},\text{itinerarioActual}\mathbin{:\!+}v)\big)
+$$
+
+Definimos el conjunto de vuelos válidos desde Org respetando el conjunto de visitados:
+
+$$
+V_{\text{válidos}} \equiv \{\, v\in \text{vuelos}\mid v.\text{Org}=\text{Org}\land v.\text{Dst}\notin \text{visitados}\,\}
+$$
+
+Entonces:
+
+$$
+\text{buscarItinerarios}(\text{Org},\text{Dst},\text{visitados},\text{itinerarioActual})
+
+=
+
+\bigoplus_{v\in V_{\text{válidos}}}
+\text{buscarItinerarios}(v.\text{Dst},\text{Dst},\text{visitados}\cup\{\text{Org}\},\text{itinerarioActual}\mathbin{:\!+}v)
+$$
+
+Donde ⨁ denota la concatenación de listas (operación inducida por flatMap).
+
+#### Casos de Inducción
+
+* Caso Base (Org = Dst):
+
+$$
+\text{buscarItinerarios}(\text{Org},\text{Org},\text{visitados},\text{itinerarioActual}) \to [\text{itinerarioActual}]
+$$
+
+Esto es correcto porque ya se llegó al destino, y el itinerario construido hasta el momento es un itinerario válido. Por tanto:
+
+$$
+\text{buscarItinerarios}(\text{Org},\text{Org},\text{visitados},\text{itinerarioActual}) = [\text{itinerarioActual}]
+$$
+
+* Hipótesis de Inducción:
+
+Para todo aeropuerto intermedio A tal que existe un vuelo desde Org hasta A (es decir, $\exists v\in \text{vuelos}: v.\text{Org}=\text{Org}\land v.\text{Dst}=A$), y donde $A\notin \text{visitados}$, se cumple que:
+
+$$
+\text{buscarItinerarios}(A,\text{Dst},\text{visitados}\cup\{\text{Org}\},\text{itinerarioActual}\mathbin{:\!+}v)
+=
+\text{TodosLosItinerarios}(A,\text{Dst},\text{visitados}\cup\{\text{Org}\},\text{itinerarioActual}\mathbin{:\!+}v)
+$$
+
+* Paso Inductivo:
+
+Si Org ≠ Dst, por sustitución y la HI:
+
+$$
+\begin{aligned}
+\text{buscarItinerarios}(\text{Org},\text{Dst},\text{visitados},\text{itinerarioActual})
+&=
+\bigoplus_{v\in V_{\text{válidos}}}
+\text{buscarItinerarios}(v.\text{Dst},\text{Dst},\text{visitados}\cup\{\text{Org}\},\text{itinerarioActual}\mathbin{:\!+}v)
+\\
+&=
+\bigoplus_{v\in V_{\text{válidos}}}
+\text{TodosLosItinerarios}(v.\text{Dst},\text{Dst},\text{visitados}\cup\{\text{Org}\},\text{itinerarioActual}\mathbin{:\!+}v)
+\\
+&= \text{TodosLosItinerarios}(\text{Org},\text{Dst},\text{visitados},\text{itinerarioActual})
+\end{aligned}
+$$
+
+#### Terminación
+
+1. El conjunto de aeropuertos es finito: $|\text{Aeropuertos}| = n < \infty$.
+2. En cada llamada recursiva se agrega Org al conjunto visitados: $\text{newVisitados} = \text{visitados} \cup \{\text{Org}\}$.
+3. Solo se consideran vuelos hacia aeropuertos no visitados: \( v.\text{Dst} \notin \text{visitados} \).
+4. Por tanto, \( |\text{visitados}| \) es estrictamente creciente en cada nivel de recursión: \( |\text{visitados}_{i+1}| = |\text{visitados}_i| + 1 \).
+5. Como \( |\text{visitados}| \le n \), el algoritmo debe alcanzar el caso base en a lo sumo n llamadas recursivas por rama.
+6. El número de ramas está acotado por los vuelos salientes en cada nivel, y también es finito.
+
+Conclusión: Hemos demostrado por inducción estructural que:
+
+$$
+\forall\ \text{Org},\ \text{Dst}:\quad
+\text{buscarItinerarios}(\text{Org},\text{Dst},\text{visitados},\text{itinerarioActual})
+=
+\text{TodosLosItinerarios}(\text{Org},\text{Dst},\text{visitados},\text{itinerarioActual})
+$$
+
+Dado que itinerarios retorna la función lambda:
+
+(c1: String, c2: String) ⇒ buscarItinerarios(c1, c2, ∅, [])
+
+Podemos concluir que:
+
+$$
+P_f = f
+$$
+
+```scala
+
+def buscarItinerarios(Org: String, Dst: String, visitados: Set[String], itinerarioActual: Itinerario): List[Itinerario] = {
+  if (Org == Dst) List(itinerarioActual)
+  else {
+    vuelos
+      .filter(v => v.Org == Org && !visitados.contains(v.Dst))
+      .flatMap { v =>
+        val newVisitados   = visitados + Org
+        val newItinerario  = itinerarioActual :+ v
+        buscarItinerarios(v.Dst, Dst, newVisitados, newItinerario)
+      }
+  }
+}
+
+(c1: String, c2: String) => buscarItinerarios(c1, c2, Set(), List())
+```
+
+### 5.2. Itinerarios con menor número de escalas
+
+Sea g: (List[Vuelo], List[Aeropuerto]) → ((String, String) → List[Itinerario]) la función que, dados una lista de vuelos y una lista de aeropuertos, retorna una función que recibe dos códigos de aeropuertos (origen y destino) y devuelve los 3 itinerarios con menor número de escalas entre ellos.
+
+El número de escalas de un itinerario se define como:
+
+* La suma de todas las escalas especificadas en cada vuelo del itinerario.
+* Más el número de cambios de vuelo: longitud del itinerario − 1.
+
+Sea $P_g$ itinerariosEscalas que pretende implementar esta funcionalidad:
+
+```scala
+
+def itinerariosEscalas(vuelos: List[Vuelo], aeropuertos: List[Aeropuerto]): (String, String) => List[Itinerario] = {
+
+  def numeroEscalas(it: Itinerario): Int =
+    it.map(_.Esc).sum + it.length - 1
+
+  val itinerariosPosibles = itinerarios(vuelos, aeropuertos)
+
+  (origen: String, destino: String) => {
+    itinerariosPosibles(origen, destino)
+      .sortBy(numeroEscalas)
+      .take(3)
+  }
+}
+```
+
+La función itinerariosEscalas se compone de:
+
+1. Una función auxiliar numeroEscalas que calcula el número total de escalas de un itinerario.
+2. Una llamada a la función itinerarios (previamente demostrada correcta).
+3. Una función lambda que ordena los itinerarios por número de escalas y toma los primeros 3.
+
+Sea h: Itinerario → ℕ la función que calcula el número total de escalas de un itinerario, definida como:
+
+$$
+h(it) = \left(\sum_{v\in it} v.\text{Esc}\right) + \big(|it| - 1\big)
+$$
+
+Sea P_h el programa numeroEscalas:
+
+$$
+\text{numeroEscalas}(it) = it.\text{map}(\_.\text{Esc}).\text{sum} + |it| - 1
+$$
+
+Por sustitución:
+
+1. it.map(_.Esc): transforma cada vuelo v en su número de escalas v.Esc, produciendo [v₁.Esc, v₂.Esc, …, vₙ.Esc].
+2. .sum: suma todos los elementos.
+3. \+ |it| − 1: agrega el número de cambios de vuelo.
+
+Por tanto:
+$$
+\text{numeroEscalas}(it) = \left(\sum_{v\in it} v.\text{Esc}\right) + \big(|it| - 1\big) = h(it)
+$$
+
+Demostración de $P_g$:
+
+Para todos vuelos, aeropuertos, origen y destino:
+
+$$
+P_g(vuelos, aeropuertos)(\text{origen}, \text{destino})
+=
+\text{take}_3\Big(
+\text{sortBy}_{\text{numeroEscalas}}
+\big(\text{itinerarios}(vuelos,aeropuertos)(\text{origen},\text{destino})\big)
+\Big)
+=
+g(vuelos, aeropuertos)(\text{origen}, \text{destino})
+$$
+
+Donde take₃ toma los primeros 3 de la lista ordenada ascendentemente por $numeroEscalas$.
+
+Conclusión: La función itinerariosEscalas es correcta respecto a su especificación.
+
+---
+
+### 5.3. Itinerario de salida óptima
+
+Sea f: (List[Vuelo], List[Aeropuerto]) → ((String, String, Int, Int) → Itinerario) la función que, dadas una lista de vuelos y una lista de aeropuertos, retorna una función que recibe:
+
+* c₁: código del aeropuerto de origen,
+* c₂: código del aeropuerto de destino,
+* h: hora de la cita (24h) en destino,
+* m: minutos de la cita en destino,
+
+y devuelve el itinerario que permite:
+
+1. llegar a tiempo a la cita (vuelos diarios),
+2. salir lo más tarde posible del aeropuerto de origen.
+
+Sea $P_f$ el programa itinerarioSalida que implementa esta funcionalidad.
+
+```scala
+def itinerarioSalida(vuelos: List[Vuelo], aeropuertos: List[Aeropuerto]): (String, String, Int, Int) => Itinerario = {
+  val itinerariosPosibles = itinerarios(vuelos, aeropuertos)
+  val aeropuertosMap = aeropuertos.map(a => a.Cod -> a).toMap
+
+  def offsetMinutos(gmt: Int): Int = (gmt / 100) * 60
+
+  def minutosUTC(hora: Int, minuto: Int, gmt: Int): Int = {
+    val totalMinutos = hora * 60 + minuto
+    totalMinutos - offsetMinutos(gmt)
+  }
+
+  def calcularTiempoTotal(itinerario: Itinerario): Int = {
+
+    def tiempoVuelo(vuelo: Vuelo): Int = {
+      val origen = aeropuertosMap(vuelo.Org)
+      val destino = aeropuertosMap(vuelo.Dst)
+      val salidaUTC = minutosUTC(vuelo.HS, vuelo.MS, origen.GMT)
+      val llegadaUTC = minutosUTC(vuelo.HL, vuelo.ML, destino.GMT)
+      val tiempo = llegadaUTC - salidaUTC
+      if (tiempo < 0) tiempo + 24 * 60 else tiempo
+    }
+
+    def tiempoEspera(vueloAnterior: Vuelo, vueloSiguiente: Vuelo): Int = {
+      val destinoAnterior = aeropuertosMap(vueloAnterior.Dst)
+      val origenSiguiente = aeropuertosMap(vueloSiguiente.Org)
+      val llegadaUTC = minutosUTC(vueloAnterior.HL, vueloAnterior.ML, destinoAnterior.GMT)
+      val salidaUTC = minutosUTC(vueloSiguiente.HS, vueloSiguiente.MS, origenSiguiente.GMT)
+      val espera = salidaUTC - llegadaUTC
+      if (espera < 0) espera + 24 * 60 else espera
+    }
+
+    val tiempoEnAire = itinerario.map(tiempoVuelo).sum
+    val tiempoEnEscala = itinerario.sliding(2).map {
+      case List(vueloAnterior, vueloSiguiente) => tiempoEspera(vueloAnterior, vueloSiguiente)
+      case _ => 0
+    }.sum
+
+    tiempoEnAire + tiempoEnEscala
+  }
+
+  @tailrec
+  def calcularDiferenciaSalida(salidaEnMinutosUTC: Int,
+                               duracionItinerario: Int,
+                               citaEnMinutosUTC: Int): Int = {
+    val llegadaEnMinutosUTC = salidaEnMinutosUTC + duracionItinerario
+    if (llegadaEnMinutosUTC <= citaEnMinutosUTC) {
+      citaEnMinutosUTC - salidaEnMinutosUTC
+    } else {
+      calcularDiferenciaSalida(
+        salidaEnMinutosUTC - 24 * 60,
+        duracionItinerario,
+        citaEnMinutosUTC
+      )
+    }
+  }
+
+  def diferenciaItinerario(itinerario: Itinerario,
+                           horaCita: Int,
+                           minutoCita: Int): Int = {
+    if (itinerario.isEmpty) Int.MaxValue
+    else {
+      val primerVuelo = itinerario.head
+      val ultimoVuelo = itinerario.last
+      val origen = aeropuertosMap(primerVuelo.Org)
+      val destino = aeropuertosMap(ultimoVuelo.Dst)
+
+      val salidaEnMinutosUTC = minutosUTC(primerVuelo.HS, primerVuelo.MS, origen.GMT)
+      val citaEnMinutosUTC = minutosUTC(horaCita, minutoCita, destino.GMT)
+      val duracionItinerario = calcularTiempoTotal(itinerario)
+
+      calcularDiferenciaSalida(
+        salidaEnMinutosUTC,
+        duracionItinerario,
+        citaEnMinutosUTC
+      )
+    }
+  }
+
+  (c1: String, c2: String, h: Int, m: Int) => {
+    val todosItinerarios = itinerariosPosibles(c1, c2)
+    if (todosItinerarios.isEmpty) {
+      null
+    } else {
+      val itinerariosConDiferencia = todosItinerarios.map { it =>
+        (it, diferenciaItinerario(it, h, m))
+      }
+      val mejorItinerario = itinerariosConDiferencia.minBy(_._2)._1
+      mejorItinerario
+    }
+  }
+}
+```
+
+#### 5.3.1 Corrección de funciones auxiliares no recursivas
+
+##### 5.3.1.1 offsetMinutos
+
+Sea offset: ℤ → ℤ la función que, dado un GMT (por ejemplo −200, 100, 500…), retorna correctamente la diferencia en minutos entre la hora estándar local y la Hora Universal Coordinada (UTC).
+
+Sea offsetMinutos la función que pretende lo mismo:
+
+$$
+\text{offsetMinutos}(\text{gmt}) = \left\lfloor \frac{\text{gmt}}{100}\right\rfloor \cdot 60
+$$
+
+Dado un GMT definido como \( h \cdot 100 \), siendo h el número de horas de diferencia respecto a UTC, dividir por 100 recupera h y multiplicar por 60 convierte a minutos. Por definición, offsetMinutos = offset.
+
+##### 5.3.1.2 minutosUTC
+
+Sea minutos: (Int, Int, Int) → Int la función que convierte una hora local a minutos y luego ajusta por UTC restando el desfase.
+
+Definición:
+
+$$
+\text{minutosUTC}(\text{hora},\text{minuto},\text{gmt})
+=
+(\text{hora}\cdot 60 + \text{minuto}) - \text{offsetMinutos}(\text{gmt})
+$$
+
+Por sustitución directa de definiciones, minutosUTC = minutos.
+
+##### 5.3.1.3 tiempoVuelo
+
+Sea tmpVuelo: Vuelo → ℤ la función que calcula la duración de un vuelo en minutos, manejando el cruce de medianoche y asumiendo que ningún vuelo dura 24 horas o más.
+
+Definición operacional:
+
+$$
+\begin{aligned}
+\text{salidaUTC} &= \text{minutosUTC}(\text{HS},\text{MS},\text{GMT}_{\text{origen}})\\
+\text{llegadaUTC} &= \text{minutosUTC}(\text{HL},\text{ML},\text{GMT}_{\text{destino}})\\
+\text{tiempo} &= \text{llegadaUTC} - \text{salidaUTC}\\
+\text{tiempoVuelo}(v) &= \begin{cases}
+\text{tiempo} + 24\cdot 60 & \text{si } \text{tiempo} < 0\\
+\text{tiempo} & \text{en otro caso}
+\end{cases}
+\end{aligned}
+$$
+
+Por sustitución y análisis de casos, tmpVuelo = tiempoVuelo.
+
+##### 5.3.1.4 tiempoEspera
+
+Sea tmpEspera: Vuelo × Vuelo → ℤ la función que calcula el tiempo de espera entre dos vuelos consecutivos en minutos:
+
+$$
+\begin{aligned}
+\text{llegadaUTC} &= \text{minutosUTC}(\text{HL}_{\text{anterior}},\text{ML}_{\text{anterior}},\text{GMT}_{\text{destinoAnterior}})\\
+\text{salidaUTC}  &= \text{minutosUTC}(\text{HS}_{\text{siguiente}},\text{MS}_{\text{siguiente}},\text{GMT}_{\text{origenSiguiente}})\\
+\text{espera} &= \text{salidaUTC} - \text{llegadaUTC}\\
+\text{tiempoEspera}(v_{\text{ant}},v_{\text{sig}}) &= \begin{cases}
+\text{espera} + 24\cdot 60 & \text{si } \text{espera} < 0\\
+\text{espera} & \text{en otro caso}
+\end{cases}
+\end{aligned}
+$$
+
+Por sustitución y análisis, tmpEspera = tiempoEspera.
+
+##### 5.3.1.5 calcularTiempoTotal
+
+Sea calcularTmp: Itinerario → ℤ la función que, dado un itinerario, calcula su duración contando tiempo en aire y entre escalas:
+
+$$
+\text{calcularTmp}(it) = \left(\sum_{v\in it} \text{tiempoVuelo}(v)\right) + \left(\sum_{i=1}^{|it|-1} \text{tiempoEspera}(v_i, v_{i+1})\right)
+$$
+
+La implementación:
+
+$$
+\begin{aligned}
+\text{tiempoEnAire} &= it.\text{map}(\text{tiempoVuelo}).\text{sum}\\
+\text{tiempoEnEscala} &= \sum_{i=1}^{|it|-1}\text{tiempoEspera}(v_i,v_{i+1})\\
+\text{calcularTiempoTotal}(it) &= \text{tiempoEnAire} + \text{tiempoEnEscala}
+\end{aligned}
+$$
+
+Con las definiciones previas correctas de tiempoVuelo y tiempoEspera, se concluye:
+
+$$
+\text{calcularTmp} = \text{calcularTiempoTotal}
+$$
+
+#### 5.3.2 Corrección de calcularDiferenciaSalida (función recursiva de cola)
+
+Sea \( g: \mathbb{Z}\times \mathbb{Z}\times \mathbb{Z} \to \mathbb{Z} \) la función que, dados:
+
+* salidaUTC: hora de salida en minutos UTC,
+* duracion: duración del itinerario en minutos,
+* citaUTC: hora de la cita en minutos UTC,
+
+retorna la diferencia en minutos entre la hora de la cita y la última hora de salida válida (posiblemente en días anteriores) que permite llegar a tiempo.
+
+Proceso iterativo formal:
+
+* Estado \( s \equiv (\text{salidaUTC}, \text{duracion}, \text{citaUTC}) \).
+* Estado inicial \( s_0 \equiv (\text{salidaUTC}_0, \text{duracion}, \text{citaUTC}) \).
+* Estado final \( s_f \) tal que \( \text{salidaUTC} + \text{duracion} \le \text{citaUTC} \).
+* Invariante:
+  $$
+  \text{Inv}(s) \equiv (\text{duracion y citaUTC constantes}) \land (\text{salidaUTC válida})
+  $$
+
+* Transformación:
+  $$
+  \text{transformar}(s) = (\text{salidaUTC} - 1440,\ \text{duracion},\ \text{citaUTC})\quad \text{donde } 1440 = 24\cdot 60
+  $$
+
+Demostración por invariante:
+
+1. \( \text{Inv}(s_0) \): trivially true por parámetros válidos.
+2. Si \( s_i \ne s_f \land \text{Inv}(s_i) \Rightarrow \text{Inv}(s_{i+1}) \):
+   si \( \text{salidaUTC}_i + \text{duracion} > \text{citaUTC} \), entonces
+   \( s_{i+1} = (\text{salidaUTC}_i - 1440, \text{duracion}, \text{citaUTC}) \);
+   se preservan duracion y citaUTC, y salidaUTC sigue siendo representable.
+3. En el estado final \( s_f \):
+   respuesta:
+   $$
+   \text{respuesta}(s_f) = \text{citaUTC} - \text{salidaUTC}_f = g(\text{salidaUTC}_0,\text{duracion},\text{citaUTC})
+   $$
+   es la última salida válida; salir más tarde (sumando 1440) no llega a tiempo.
+4. Terminación:
+   en cada iteración \( \text{salidaUTC} \) decrece 1440, y la diferencia
+   \( (\text{salidaUTC}+\text{duracion}) - \text{citaUTC} \) es finita; eventualmente se cumple la condición final.
+
+Por tanto, calcularDiferenciaSalida es correcta.
+
+##### 5.3.2.1 Corrección de diferenciaItinerario
+
+Sea difItinerario: (Itinerario, Int, Int) → ℤ la función que calcula la diferencia de tiempo entre la cita y la hora de salida óptima para un itinerario dado.
+
+Definición:
+
+$$
+\text{diferenciaItinerario}(it,\ \text{horaCita},\ \text{minutoCita}) =
+\begin{cases}
+\text{Int.MaxValue}, & \text{si } it = []\\[4pt]
+\text{calcularDiferenciaSalida}(\text{salidaUTC},\ \text{duracion},\ \text{citaUTC}),
+& \text{si } it \ne []
+\end{cases}
+$$
+
+con:
+$$
+\begin{aligned}
+\text{salidaUTC} &= \text{minutosUTC}(\text{HS}_{\text{primer}},\text{MS}_{\text{primer}},\text{GMT}_{\text{origen}})\\
+\text{citaUTC} &= \text{minutosUTC}(\text{horaCita},\text{minutoCita},\text{GMT}_{\text{destino}})\\
+\text{duracion} &= \text{calcularTiempoTotal}(it)
+\end{aligned}
+$$
+
+Por sustitución y por corrección previa de calcularDiferenciaSalida y calcularTiempoTotal, se concluye:
+
+$$
+\text{difItinerario} = \text{diferenciaItinerario}
+$$
+
+#### 5.3.3 Corrección de la función principal
+
+La lambda retornada por $P_f$ es:
+
+$$
+(c_1,c_2,h,m)\ \Rightarrow\
+\begin{cases}
+\text{null}, & \text{si } \text{itinerariosPosibles}(c_1,c_2) = []\\
+\text{argmin}_{it}\ \text{diferenciaItinerario}(it,h,m), & \text{en otro caso}
+\end{cases}
+$$
+
+donde:
+$$
+\text{argmin}_{it}\ \text{diferenciaItinerario}(it,h,m)
+=
+\Big(\text{minBy}_{(it,\ \text{diff})} \big(\text{diff}\big)\Big).\_1
+\quad \text{con }\ (it,\ \text{diff}) \in
+\big\{(it,\ \text{diferenciaItinerario}(it,h,m))\big\}
+$$
+
+Interpretación:
+
+* Se selecciona el itinerario con mínima \( \text{citaUTC} - \text{salidaUTC}_f \), lo que equivale a maximizar la última salida válida manteniendo llegada a tiempo.
+* Por la corrección de componentes auxiliares, $P_f = f$.
+
+Conclusión general:
+
+$$
+\forall\ \text{vuelos},\ \text{aeropuertos},\ c_1,\ c_2,\ h,\ m:\quad
+\text{itinerarioSalida}(\text{vuelos},\ \text{aeropuertos})(c_1,c_2,h,m) = f(\text{vuelos},\ \text{aeropuertos})(c_1,c_2,h,m)
+$$
+
+Retorna correctamente el itinerario que permite llegar a tiempo a la cita y salir lo más tarde posible del aeropuerto de origen (considerando vuelos diarios).
 
 ---
 
