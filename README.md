@@ -7,7 +7,7 @@ Proyecto en Scala 3. Puedes correrlo directamente desde IntelliJ IDEA.
 - Plugin de Scala instalado en IntelliJ
 - JDK (preferiblemente 17 o superior)
 
-## Cómo correr en IntelliJ (sin SBT)
+## Cómo correr en IntelliJ
 1. Abre IntelliJ IDEA.
 2. Ve a “Open” y selecciona la carpeta del repositorio (`PROYECTO_FPFC`).
 3. Asegúrate de que IntelliJ detecte el JDK (Project SDK) y la versión de Scala. Si te lo pide, configúralo en:
