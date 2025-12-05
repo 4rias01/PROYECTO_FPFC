@@ -10,8 +10,8 @@ import org.scalameter._
 
 object WorksheetDePruebas {
 
-  val vuelos = Datos.vuelos.take(100)  // Limitar vuelos con take
-  val aeropuertos = Datos.aeropuertos  
+  val vuelos = Datos.vuelos.take(200)  // Limitar vuelos con take
+  val aeropuertos = Datos.aeropuertos
 
   // 1. Información de datos usando funciones puras
   def mostrarInformacionDatos(): Unit = {
@@ -30,18 +30,18 @@ object WorksheetDePruebas {
 
     println(s"\nVuelos disponibles ($numVuelos):")
     vuelos.foreach { v =>
-      println(f"  ${v.Aln}%8s ${v.Num}%4d: ${v.Org}%4s ${v.HS}%02d:${v.MS}%02d -> ${v.Dst}%4s ${v.HL}%02d:${v.ML}%02d (Esc: ${v.Esc})")
+      //println(f"  ${v.Aln}%8s ${v.Num}%4d: ${v.Org}%4s ${v.HS}%02d:${v.MS}%02d -> ${v.Dst}%4s ${v.HL}%02d:${v.ML}%02d (Esc: ${v.Esc})")
     }
 
     val conexiones = vuelos.map(v => s"${v.Org}->${v.Dst}").distinct
-    println(s"\nConexiones directas (${conexiones.size}): ${conexiones.mkString(" ")}")
+    //println(s"\nConexiones directas (${conexiones.size}): ${conexiones.mkString(" ")}")
   }
 
   // 2. Prueba de una ruta específica (funcional puro)
   def probarRuta(origen: String, destino: String, descripcion: String): (List[Itinerario], List[Itinerario]) = {
     //activar si se quiere ver los itinerarios que devuelve
-    //println(s"\n[Prueba] $descripcion")
-    //println(s"         Ruta: $origen -> $destino")
+    println(s"\n[Prueba] $descripcion")
+    println(s"         Ruta: $origen -> $destino")
 
     val resultadoSecuencial = Try(itinerarios(vuelos, aeropuertos)(origen, destino))
     val resultadoParalelo = Try(itinerariosPar(vuelos, aeropuertos)(origen, destino))
@@ -54,7 +54,7 @@ object WorksheetDePruebas {
         if (sec.nonEmpty) {
           sec.zipWithIndex.foreach { case (it, i) =>
             val ruta = it.map(v => s"${v.Org}->${v.Dst}").mkString(" -> ")
-            println(s"    ${i + 1}. $ruta")
+            //println(s"    ${i + 1}. $ruta")
           }
         }
 
@@ -81,12 +81,13 @@ object WorksheetDePruebas {
     println("PRUEBAS DE CORRECCION")
     println("=" * 60)
 
+    // con esto se configuran las pruebas (origen,destino,descripcion)
     val pruebas = List(
-      ("HOU", "MSY", "Ruta directa HOU -> MSY (4X 373)"),
-      ("MSY", "HOU", "Ruta con escalas MSY -> HOU (4X 201)"),
-      ("MSY", "DFW", "Ruta con escalas MSY -> DFW (4X 213)"),
-      ("MSY", "ORD", "Ruta con escalas MSY -> ORD (4X 374)"),
-      ("ORD", "RDU", "Ruta con escalas ORD -> RDU (AA 520)"),
+      ("HOU", "MSY", "Ruta directa HOU->MSY"),
+      ("HOU", "DFW", "Ruta 1 escala HOU->DFW"),
+      ("SEA", "MIA", "Ruta larga SEA->MIA"),
+      ("ABQ", "TPA", "Ruta sin conexión directa"),
+      ("MSY", "ORD", "Múltiples conexiones MSY->ORD")
     )
 
     val resultados = pruebas.foldLeft((0, 0)) { case ((correctas, totales), (origen, destino, desc)) =>
@@ -120,19 +121,19 @@ object WorksheetDePruebas {
       tiempo.value
     }
 
-    // Rutas para probar
+    // Rutas para probar scalameter (origen, destino)
     val rutas = List(
       ("HOU", "MSY"),
-      ("MSY", "HOU"),
-      ("MSY", "DFW"),
-      ("MSY", "ORD"),
-      ("ORD", "RDU"),
+      ("HOU", "DFW"),
+      ("SEA", "MIA"),
+      ("ABQ", "TPA"),
+      ("MSY", "ORD")
     )
 
     // Ejecutar las pruebas de rendimiento comparando la versión secuencial y paralela
     rutas.foreach { case (origen, destino) =>
-      val tiempoSecuencial = medirTiempo(itinerarios(vuelos.take(100), aeropuertos), origen, destino)
-      val tiempoParalelo = medirTiempo(itinerariosPar(vuelos.take(100), aeropuertos), origen, destino)
+      val tiempoSecuencial = medirTiempo(itinerarios(vuelos, aeropuertos), origen, destino)
+      val tiempoParalelo = medirTiempo(itinerariosPar(vuelos, aeropuertos), origen, destino)
       val speedUp = tiempoSecuencial / tiempoParalelo
 
       println(s"\nRuta: $origen -> $destino")
@@ -140,7 +141,6 @@ object WorksheetDePruebas {
       println(s"  Tiempo paralelo:   $tiempoParalelo ms")
       println(s"  Speed-up:          $speedUp")
     }
-
     println("=" * 60)
   }
 
@@ -170,9 +170,9 @@ object WorksheetDePruebas {
       .toList
       .sortBy(-_._2)
 
-    println("\nConexiones salientes por aeropuerto:")
+    //println("\nConexiones salientes por aeropuerto:")
     conexionesSalientes.foreach { case (aeropuerto, conexiones) =>
-      println(f"  $aeropuerto%4s: $conexiones%2d conexiones directas")
+      //println(f"  $aeropuerto%4s: $conexiones%2d conexiones directas")
     }
   }
 

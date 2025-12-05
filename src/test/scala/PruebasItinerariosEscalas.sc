@@ -5,11 +5,12 @@ import scala.concurrent.{Future, Await, ExecutionContext}
 import scala.concurrent.duration._
 import scala.util.{Try, Success, Failure}
 import scala.collection.parallel.CollectionConverters._
+import org.scalameter._
 
 object WorksheetDePruebas {
 
-  val vuelos = Datos.vuelosCurso
-  val aeropuertos = Datos.aeropuertosCurso
+  val vuelos = Datos.vuelos.take(200)
+  val aeropuertos = Datos.aeropuertos
 
   // 1. Información de datos usando funciones puras
   def mostrarInformacionDatos(): Unit = {
@@ -22,12 +23,12 @@ object WorksheetDePruebas {
 
     println(s"\nAeropuertos disponibles ($numAeropuertos):")
     aeropuertos.foreach { a =>
-      println(f"  ${a.Cod}%4s - GMT: ${a.GMT}%4d")
+      //println(f"  ${a.Cod}%4s - GMT: ${a.GMT}%4d")
     }
 
     println(s"\nVuelos disponibles ($numVuelos):")
     vuelos.foreach { v =>
-      println(f"  ${v.Aln}%8s ${v.Num}%4d: ${v.Org}%4s ${v.HS}%02d:${v.MS}%02d -> ${v.Dst}%4s ${v.HL}%02d:${v.ML}%02d (Esc: ${v.Esc})")
+      //println(f"  ${v.Aln}%8s ${v.Num}%4d: ${v.Org}%4s ${v.HS}%02d:${v.MS}%02d -> ${v.Dst}%4s ${v.HL}%02d:${v.ML}%02d (Esc: ${v.Esc})")
     }
 
     val conexiones = vuelos.map(v => s"${v.Org}->${v.Dst}").distinct
@@ -77,12 +78,13 @@ object WorksheetDePruebas {
     println("PRUEBAS DE CORRECCION")
     println("=" * 60)
 
+    // Actualicé las rutas para usar aeropuertos del conjunto Datos.vuelos
     val pruebas = List(
-      ("MID", "SVCS", "Ruta directa MID -> SVCS (AIRVZLA 601)"),
-      ("CLO", "SVO", "Ruta con escalas CLO -> SVO"),
-      ("CLO", "HND", "Ruta inexistente CLO -> HND"),
-      ("BOG", "MEX", "Ruta directa BOG -> MEX (LATAM 787)"),
-      ("CLO", "IST", "Ruta CLO -> IST (TURKISH 7799)")
+      ("HOU", "MSY", "Ruta directa HOU -> MSY"),
+      ("HOU", "DFW", "Ruta con escalas HOU -> DFW"),
+      ("SEA", "MIA", "Ruta larga SEA -> MIA"),
+      ("MSY", "ORD", "Ruta MSY -> ORD"),
+      ("DFW", "SEA", "Ruta DFW -> SEA")
     )
 
     val resultados = pruebas.foldLeft((0, 0)) { case ((correctas, totales), (origen, destino, desc)) =>
@@ -95,16 +97,84 @@ object WorksheetDePruebas {
     println(s"\nResumen: ${resultados._1} de ${resultados._2} pruebas correctas")
   }
 
-  // 4. Prueba de rendimiento (Aún en construcción)
+  // 4. Prueba de rendimiento con ScalaMeter
   def pruebaRendimientoFuncional(): Unit = {
     println("\n" + "=" * 60)
     println("PRUEBA DE RENDIMIENTO SECUENCIAL VS CONCURRENTE")
-    println("EN CONSTRUCCION JEJEJEJE")
-
     println("=" * 60)
+
+    // ScalaMeter: configuración de las mediciones
+    val configScalameter = config(
+      KeyValue(Key.exec.minWarmupRuns -> 20),
+      KeyValue(Key.exec.maxWarmupRuns -> 60),
+      KeyValue(Key.verbose -> false)
+    )
+
+    // Función para medir el rendimiento de un algoritmo
+    def medirTiempo(algoritmo: (String, String) => List[Itinerario], origen: String, destino: String): Double = {
+      val tiempo = configScalameter withWarmer new Warmer.Default measure {
+        algoritmo(origen, destino)
+      }
+      tiempo.value
+    }
+
+    // Rutas para probar scalameter (origen, destino) - usando aeropuertos del conjunto Datos.vuelos
+    val rutas = List(
+      ("HOU", "MSY"),
+      ("HOU", "DFW"),
+      ("SEA", "MIA"),
+      ("DFW", "SEA"),
+      ("MSY", "ORD")
+    )
+
+    println("\nComparación de rendimiento para itinerariosEscalas:")
+    println("(Todos los itinerarios ordenados por número de escalas)")
+    println("-" * 50)
+
+    // Ejecutar las pruebas de rendimiento comparando la versión secuencial y paralela
+    rutas.foreach { case (origen, destino) =>
+      val tiempoSecuencial = medirTiempo(itinerariosEscalas(vuelos, aeropuertos), origen, destino)
+      val tiempoParalelo = medirTiempo(itinerariosEscalasPar(vuelos, aeropuertos), origen, destino)
+      val speedUp = tiempoSecuencial / tiempoParalelo
+
+      println(s"\nRuta: $origen -> $destino")
+      println(f"  Tiempo secuencial: $tiempoSecuencial%8.2f ms")
+      println(f"  Tiempo paralelo:   $tiempoParalelo%8.2f ms")
+      println(f"  Speed-up:          $speedUp%8.2f x")
+
+      // Información adicional sobre los resultados
+      val resultadoSec = Try(itinerariosEscalas(vuelos, aeropuertos)(origen, destino)).getOrElse(Nil)
+      println(s"  Itinerarios encontrados: ${resultadoSec.size}")
+
+      if (resultadoSec.nonEmpty) {
+        val minEscalas = resultadoSec.map(_.size - 1).min
+        val maxEscalas = resultadoSec.map(_.size - 1).max
+        println(s"  Escalas: ${minEscalas}-${maxEscalas} (mín-máx)")
+      }
+    }
+
+    // Análisis estadístico de speed-ups
+    val speedUps = rutas.map { case (origen, destino) =>
+      val tiempoSec = medirTiempo(itinerariosEscalas(vuelos, aeropuertos), origen, destino)
+      val tiempoPar = medirTiempo(itinerariosEscalasPar(vuelos, aeropuertos), origen, destino)
+      tiempoSec / tiempoPar
+    }
+
+    if (speedUps.nonEmpty) {
+      val promedioSpeedUp = speedUps.sum / speedUps.length
+      val maxSpeedUp = speedUps.max
+      val minSpeedUp = speedUps.min
+
+      println("\n" + "=" * 50)
+      println("RESUMEN ESTADÍSTICO DE SPEED-UPS")
+      println("=" * 50)
+      println(f"  Speed-up promedio: $promedioSpeedUp%.2f x")
+      println(f"  Speed-up máximo:   $maxSpeedUp%.2f x")
+      println(f"  Speed-up mínimo:   $minSpeedUp%.2f x")
+    }
   }
 
-  // 5. Análisis de datos usando operaciones funcionales
+  // 5. Análisis de datos de entrada
   def analisisDatosFuncional(): Unit = {
     println("\n" + "=" * 60)
     println("ANALISIS DE DATOS DE ENTRADA")
